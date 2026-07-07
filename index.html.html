@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-TESS Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F2F4F3; --ink:#1C2B33; --card:#FFFFFF; --border:#D9DEDC; --line:#EDF0EF;
+    --muted:#71807B; --faint:#8A9793; --sub:#44565F;
+    --d1:#2C4B7C; --d2:#8E4A7E; --d3:#2E8B8B; --d4:#C96A2E;
+    --amber:#E3A93C; --amberT:#7A5410; --blue:#5B8DBE; --blueT:#28517A;
+    --green:#3E7C4F; --greenT:#1F5230; --gray:#C6CCC9; --red:#B4534A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Public Sans',system-ui,sans-serif;font-size:14px;line-height:1.5}
+  .mono{font-family:'IBM Plex Mono',monospace}
+  .disp{font-family:'Bitter',serif}
+  button{cursor:pointer;font-family:inherit;font-size:13px}
+  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--d1);outline-offset:2px}
+  input,textarea,select{font-family:'Public Sans',system-ui,sans-serif;font-size:13px;border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--ink);background:#fff}
+  ::placeholder{color:var(--faint)}
+  header.top{background:var(--ink);color:var(--paper);padding:14px 20px}
+  .wrap{max-width:1060px;margin:0 auto}
+  .top .wrap{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .eyebrow{font-size:10px;letter-spacing:.18em;color:#9DB4C4;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+  .brand{font-family:'Bitter',serif;font-size:22px;font-weight:700;line-height:1.2}
+  .brand .sq{display:inline-block;width:9px;height:9px;border-radius:2px;margin-left:3px;transform:translateY(-2px)}
+  .namechip{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#C3CFCB;border:1px solid #44565F;border-radius:20px;padding:7px 14px}
+  nav.tabs{background:#fff;border-bottom:1px solid var(--border)}
+  nav.tabs .wrap{display:flex;gap:2px;padding:0 20px;overflow-x:auto}
+  nav.tabs button{padding:12px 16px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+  main{max-width:1060px;margin:0 auto;padding:20px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px}
+  .chip{padding:5px 11px;border-radius:14px;border:1px solid var(--gray);background:#fff;color:#5A6662;font-size:12px;font-weight:600}
+  .chip.on{border-width:1.5px}
+  .btn{border:1px solid var(--gray);background:#fff;border-radius:6px;padding:7px 12px;font-weight:600;color:var(--sub)}
+  .btn.dark{background:var(--ink);color:var(--paper);border:none}
+  .btn:disabled{opacity:.55;cursor:default}
+  .datechip{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px}
+  .datechip.urgent{background:#FBEFDD;border-color:var(--amber)}
+  .domcard{text-align:left;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;width:100%}
+  .domgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+  .minibar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#E7EBE9}
+  .pill{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:4px 9px;border-radius:12px;border:none;min-width:92px;flex-shrink:0}
+  .critrow{display:flex;align-items:flex-start;gap:10px;padding:10px 14px}
+  .crittext{flex:1;text-align:left;border:none;background:transparent;padding:0;font-size:14px;line-height:1.45;color:var(--ink)}
+  .ideabox{background:#F5F7F6;border-radius:6px;padding:10px 12px;color:var(--sub);margin-bottom:10px;line-height:1.5;font-size:13px}
+  .usebtn{font-family:'IBM Plex Mono',monospace;flex-shrink:0;font-size:10px;font-weight:600;border:1px solid var(--gray);background:#fff;border-radius:10px;padding:2px 8px;color:var(--d1);min-width:58px}
+  .usebtn.added{border-color:var(--green);background:var(--green);color:#fff}
+  .fieldgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .fieldgrid input{width:100%}
+  .dimtag{font-family:'IBM Plex Mono',monospace;color:#fff;font-size:12px;font-weight:600;padding:3px 8px;border-radius:4px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.55;white-space:pre-wrap;overflow-wrap:break-word}
+  .msg.user{background:var(--ink);color:var(--paper);border-top-right-radius:3px}
+  .msg.bot{background:#F5F7F6;color:var(--ink);border-top-left-radius:3px}
+  .modechip{padding:8px 13px;border-radius:18px;border:1px solid var(--gray);background:#fff;color:var(--sub);font-size:13px;font-weight:600}
+  .modechip.on{border:2px solid var(--ink);background:var(--ink);color:var(--paper)}
+  label.lab{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:var(--muted);display:block}
+  .note{font-size:11px;color:var(--faint);line-height:1.6}
+  details.saved{border-top:1px solid var(--line);padding:10px 0}
+  details.saved summary{cursor:pointer;font-size:13px;font-weight:600;display:flex;gap:10px;align-items:center;list-style:none}
+  details.saved summary::-webkit-details-marker{display:none}
+  @media (max-width:640px){.fieldgrid{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div>
+    <div class="eyebrow">Texas Teacher Evaluation &amp; Support System</div>
+    <div class="brand">T-TESS Companion
+      <span class="sq" style="background:var(--d1)"></span><span class="sq" style="background:var(--d2)"></span><span class="sq" style="background:var(--d3)"></span><span class="sq" style="background:var(--d4)"></span>
+    </div>
+  </div>
+  <div class="namechip" id="namechip">My workspace</div>
+</div></header>
+<nav class="tabs"><div class="wrap">
+  <button data-tab="dashboard" class="on">Evidence Dashboard</button>
+  <button data-tab="coach">Coach</button>
+  <button data-tab="settings">Settings, Goals &amp; Notes</button>
+</div></nav>
+<main id="main"></main>
+
+<script>
+"use strict";
+/* ============================================================
+   T-TESS COMPANION — Universal Edition
+   Works with Gemini, ChatGPT (OpenAI), Claude (Anthropic), or Grok (xAI)
+   using YOUR OWN API key, stored only in this browser.
+   Tracker, evidence library, exports work with no key at all.
+   ============================================================ */
+
+const CRITERIA = [{"id":"c1","dim":"1.1","dn":"Standards and Alignment","c":"All rigorous and measurable goals are aligned to state content standards.","i":["Lesson plan with the TEKS code written next to each objective, stated in measurable language (e.g., 'Students will... with 80% accuracy').","Course syllabus or unit overview listing the standards covered in each unit.","Screenshot of an LMS assignment tagged with its standard, next to the measurable objective.","Photo of your daily objective board showing a measurable, standards-coded objective.","District curriculum map annotated with your lesson objectives."],"p":"One-Time OK","dom":1},{"id":"c2","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments are logically sequenced.","i":["Unit plan or pacing guide showing activities in a clear I-do/We-do/You-do or scaffolded order.","Pacing calendar showing lessons building in a deliberate order across the unit.","Slide deck agenda showing warm-up \u2192 instruction \u2192 practice \u2192 closure progression.","LMS module screenshot showing lessons locked/ordered in sequence."],"p":"One-Time OK","dom":1},{"id":"c3","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments are relevant to students' prior understanding and real-world applications.","i":["A lesson opener/hook document or slide that ties new content to a real-world scenario or prior unit.","Warm-up or bell-ringer slide that explicitly bridges from the previous lesson.","KWL or anticipation-guide artifact activating prior knowledge.","Lesson hook referencing a current event or everyday scenario students recognize."],"p":"One-Time OK","dom":1},{"id":"c4","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments integrate and reinforce concepts from other disciplines.","i":["A cross-curricular lesson plan (e.g., a science lab that reinforces a math skill, or a history reading tied to ELA writing standards).","Co-planned lesson or email thread with a teacher from another department.","Assignment rubric that grades a skill from another discipline (e.g., writing or graphing).","Project brief that requires content from two subject areas."],"p":"One-Time OK","dom":1},{"id":"c5","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments provide appropriate time for student work, student reflection, lesson and lesson closure.","i":["Lesson plan with a written timing breakdown showing minutes allotted to work time, reflection, and closure (e.g., an exit ticket).","Annotated agenda with minutes allotted to each segment, including closure.","Photo of an on-screen timer used to protect work and reflection time.","Sample reflection prompt or exit ticket that closes the lesson."],"p":"One-Time OK","dom":1},{"id":"c6","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments deepen understanding of broader unit and course objectives.","i":["Unit map showing how this lesson's objective ladders up to the unit goal and course-level standard.","Essential-questions poster or slide connecting today's lesson to the unit arc.","Culminating task description showing what daily lessons build toward.","Syllabus or course roadmap showing where this unit sits in the year."],"p":"One-Time OK","dom":1},{"id":"c7","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments are vertically aligned to state standards.","i":["A vertical alignment document or note showing how this skill connects to what students learned the prior grade level and what's coming next.","Vertical alignment chart showing the skill in the prior and next grade/course.","Notes from a vertical team or department alignment meeting.","Prerequisite-skills pretest that references prior-year standards."],"p":"One-Time OK","dom":1},{"id":"c8","dim":"1.1","dn":"Standards and Alignment","c":"Activities, materials and assessments are appropriate for diverse learners.","i":["Lesson plan with a visible differentiation/accommodations column (e.g., modified text, sentence stems, extension tasks).","Accommodations checklist showing how plans were implemented (names redacted).","Sentence stems, glossaries, or visual supports prepared for language learners.","Station or rotation plan giving multiple entry points to the same objective."],"p":"Ongoing","dom":1},{"id":"c9","dim":"1.1","dn":"Standards and Alignment","c":"Objectives are aligned and logically sequenced to the lesson's goal, providing relevant and enriching extensions of the lesson.","i":["An 'extension/enrichment task' attached to the lesson plan for students who finish early or need a challenge.","Early-finisher menu or extension column on the assignment.","Challenge task rubric attached to the core assignment.","Choice-board row labeled as enrichment beyond the objective."],"p":"One-Time OK","dom":1},{"id":"c10","dim":"1.1","dn":"Standards and Alignment","c":"Technology is integrated to enhance mastery of goal(s).","i":["Screenshot or link to a tech tool used purposefully in the lesson (e.g., Desmos, Nearpod, a simulation) with a note on how it deepened mastery.","Student digital product (slide, simulation result, video) tied to the objective.","LMS or app analytics screenshot showing mastery data from the tool.","Short written note on why the tool deepened mastery vs. paper alternative."],"p":"One-Time OK","dom":1},{"id":"c11","dim":"1.2","dn":"Data and Assessment","c":"Formal and informal assessments are used to monitor progress of all students.","i":["A combined gradebook export showing both a formal test score and an informal exit-ticket score for the same skill.","Photo of a stack/sample of exit tickets with a note on how results were used.","Observation checklist or clipboard notes covering every student.","Data tracker combining a formal score and an informal check for the same skill."],"p":"Ongoing","dom":1},{"id":"c12","dim":"1.2","dn":"Data and Assessment","c":"Appropriate diagnostic, formative and summative assessment data is shared with students to engage them in self-assessment.","i":["A student self-assessment/data-tracking sheet (e.g., a 'My Progress' chart students fill in after each quiz).","Test-corrections or reflection sheet where students respond to their own data.","Student data folder sample (redacted) showing scores shared with the student.","Notes from brief student data conferences."],"p":"Ongoing","dom":1},{"id":"c13","dim":"1.2","dn":"Data and Assessment","c":"Students build awareness of their own strengths and weaknesses and track their own progress.","i":["Student goal-tracking log or data notebook where students record scores and reflect on growth over time.","Student data notebook page graphing their own scores over time.","Digital tracker screenshot owned and updated by the student.","Student reflection log: 'my strength / my weakness / my next step.'"],"p":"Ongoing","dom":1},{"id":"c14","dim":"1.2","dn":"Data and Assessment","c":"Substantive, specific and timely feedback is given to students, families and school personnel on student growth in relation to classroom and campus goals.","i":["Copy of a parent progress email/newsletter or graded paper with specific written feedback (not just a grade).","Copy of a positive or growth-focused parent email (redacted).","Progress-report comments showing specific, actionable feedback.","Email looping in a counselor or case manager on student growth (redacted)."],"p":"Ongoing","dom":1},{"id":"c15","dim":"1.2","dn":"Data and Assessment","c":"Engages with colleagues to adapt school-wide instructional strategies and goals to meet student needs while maintaining confidentiality.","i":["PLC/team meeting notes showing you brought student data to the group and proposed an instructional adjustment.","PLC minutes showing you brought data and proposed an adjustment.","Shared intervention plan your team adopted after your data protocol.","Department agenda item you led on a school-wide strategy."],"p":"Ongoing","dom":1},{"id":"c16","dim":"1.2","dn":"Data and Assessment","c":"Analyzes student data connected to specific instructional strategies and uses results to reflect on his/her teaching.","i":["A short data-reflection memo: 'After reviewing quiz data, I re-taught X using strategy Y' with before/after scores.","Item analysis of an assessment with your written next steps.","Reteach plan with before/after scores attached.","Short teaching-reflection journal entry tied to a specific data point."],"p":"Ongoing","dom":1},{"id":"c17","dim":"1.2","dn":"Data and Assessment","c":"Monitors teaching strategies and behaviors in relation to student success based on data analysis.","i":["A running log entry noting a strategy change tied to a specific data point (e.g., re-grouping after formative check).","Running log of strategy changes, each tied to the data that prompted it.","Comparison of two class periods where you varied the strategy and tracked results.","Note documenting a regrouping decision after a formative check."],"p":"Ongoing","dom":1},{"id":"c18","dim":"1.3","dn":"Knowledge of Students","c":"All lessons connect to students' prior knowledge, experiences, interests and future learning expectations across content areas.","i":["Lesson plan opener that explicitly references a prior lesson, a student interest survey result, or an upcoming topic.","Student interest survey plus the lesson element it shaped.","Opener slide explicitly referencing a prior unit or another course.","Career or future-course connection slide in the lesson."],"p":"Ongoing","dom":1},{"id":"c19","dim":"1.3","dn":"Knowledge of Students","c":"Provides guidance for students to apply their strengths, background knowledge, life experiences and skills to enhance each other's learning.","i":["A peer-teaching or jigsaw activity plan where students with different backgrounds/strengths are intentionally grouped.","Jigsaw plan where each student teaches a piece to the group.","Peer-tutoring roster pairing complementary strengths.","Gallery-walk feedback forms where students improve each other's work."],"p":"One-Time OK","dom":1},{"id":"c20","dim":"1.3","dn":"Knowledge of Students","c":"Provides opportunities for students to utilize their individual learning patterns, habits and needs to achieve high levels of academic and social-emotional success.","i":["A choice board or learning-menu assignment letting students pick a format (visual, written, hands-on) that fits their learning style.","Choice board letting students pick the format that fits how they learn.","Learning-preference survey plus the options you built from it.","Menu assignment with visual, written, and hands-on paths to one objective."],"p":"One-Time OK","dom":1},{"id":"c21","dim":"1.4","dn":"Activities","c":"Provides opportunities for students to generate questions that lead to further inquiry and promote complex, higher-order thinking, problem solving and real-world application.","i":["A student-generated 'wonder wall' or inquiry-question log from a lesson, plus the follow-up investigation it led to.","Photo of a wonder wall or driving-question board with student questions.","Question Formulation Technique (QFT) artifacts from a lesson.","Student question log plus the follow-up investigation it launched."],"p":"One-Time OK","dom":1},{"id":"c22","dim":"1.4","dn":"Activities","c":"Forms instructional groups based on the needs of all students and allows students to take ownership of group and individual accountability.","i":["A grouping roster showing how groups were formed (by data/need) plus a group role-assignment sheet (facilitator, recorder, etc.).","Grouping roster annotated with the data used to form groups.","Role cards (facilitator, recorder, materials, reporter) used in groups.","Group contract or accountability checklist students signed."],"p":"Ongoing","dom":1},{"id":"c23","dim":"1.4","dn":"Activities","c":"Enables all students to set goals, reflect on, evaluate and hold each other accountable within instructional groups.","i":["A group work rubric or peer-accountability checklist students fill out about their own group's process.","Group goal sheet set by the group at the start of a task.","Peer-evaluation rubric students complete about their group.","Group reflection exit slip: what we did well, what we fix next time."],"p":"Ongoing","dom":1},{"id":"c24","dim":"1.4","dn":"Activities","c":"Activities, resources, technology and instructional materials are all aligned to instructional purposes.","i":["Lesson plan materials list with a one-line justification for why each resource was chosen.","Materials list with a one-line purpose note for each resource.","Slide deck annotated with why each resource appears where it does.","Lesson plan showing every activity mapped to the objective."],"p":"One-Time OK","dom":1},{"id":"c25","dim":"1.4","dn":"Activities","c":"Activities, resources, technology and instructional materials are varied and appropriate to ability levels of students.","i":["A tiered assignment (same objective, 2-3 versions at different complexity levels).","Tiered assignment: same objective at 2-3 complexity levels.","Leveled text or problem sets for the same lesson.","Paired scaffolded and challenge versions of one task."],"p":"One-Time OK","dom":1},{"id":"c26","dim":"1.4","dn":"Activities","c":"Activities, resources, technology and instructional materials actively engage students in ownership of their learning.","i":["A student-led project, choice assignment, or portfolio piece showing student-directed decisions.","Student-led project artifact with student-made decisions visible.","Portfolio piece with the student's own selection rationale.","Samples of different products students chose for one objective."],"p":"One-Time OK","dom":1},{"id":"c27","dim":"2.1","dn":"Achieving Expectations","c":"Provides opportunities for students to establish high academic and social-emotional expectations for themselves.","i":["A student-written personal goal-setting sheet (academic + SEL goal) at the start of a unit or grading period.","Student-written goal sheet with an academic and an SEL goal.","Co-authored class mission or expectations statement.","Student learning contract for a unit or grading period."],"p":"One-Time OK","dom":2},{"id":"c28","dim":"2.1","dn":"Achieving Expectations","c":"Persists with the lesson until there is evidence that ALL students demonstrate mastery of the objective.","i":["Mastery-check data (exit ticket or quick quiz) showing 100% of students hit the objective, plus a note on the reteach loop used to get there.","Documentation of a reteach loop: data \u2192 regroup \u2192 recheck.","Mastery tracker showing retakes until every student reached the bar.","Small-group intervention log tied to the day's objective."],"p":"Ongoing","dom":2},{"id":"c29","dim":"2.1","dn":"Achieving Expectations","c":"Provides opportunities for students to self-monitor and self-correct mistakes.","i":["An answer-key self-check activity or error-analysis worksheet where students find and fix their own mistakes.","Error-analysis worksheet where students find and fix their own mistakes.","Self-check station or answer-key routine photo/description.","Rubric self-scoring students complete before submitting work."],"p":"One-Time OK","dom":2},{"id":"c30","dim":"2.1","dn":"Achieving Expectations","c":"Systematically enables students to set goals for themselves and monitor their progress over time.","i":["A recurring student goal-tracking sheet updated weekly/biweekly (not a one-time activity).","Weekly or biweekly goal tracker updated by students all term.","Log of recurring goal conferences across a grading period.","Screenshot of a student progress dashboard spanning multiple months."],"p":"Ongoing","dom":2},{"id":"c31","dim":"2.2","dn":"Content Knowledge and Expertise","c":"Displays extensive content knowledge of all the subjects taught and closely related subjects.","i":["A lesson plan or observation note where you connect the topic to a related discipline (e.g., chemistry tying into biology).","Advanced coursework, certification, or content PD certificate.","Lesson notes connecting the topic to a neighboring discipline.","Observer note citing depth or fluency of your content explanations."],"p":"Ongoing","dom":2},{"id":"c32","dim":"2.2","dn":"Content Knowledge and Expertise","c":"Integrates learning objectives with other disciplines, content areas and real-world experience.","i":["Cross-curricular project plan or guest-speaker/real-world case study used in a lesson.","Case study or real-world scenario used as the spine of a lesson.","Guest speaker or virtual field trip documentation tied to the objective.","Project brief framed around an authentic industry or community problem."],"p":"One-Time OK","dom":2},{"id":"c33","dim":"2.2","dn":"Content Knowledge and Expertise","c":"Consistently anticipates possible student misunderstandings and proactively develops teaching techniques to mitigate concerns.","i":["Lesson plan with an 'anticipated misconceptions' section and the specific teaching move planned to address each one.","Lesson plan with an anticipated-misconceptions column and planned moves.","Pre-test distractor analysis showing which wrong answers you planned for.","Anticipation guide built around common errors."],"p":"Ongoing","dom":2},{"id":"c34","dim":"2.2","dn":"Content Knowledge and Expertise","c":"Consistently provides opportunities for students to use different types of thinking (analytical, practical, creative, research-based).","i":["An assignment or rubric that explicitly requires more than one type of thinking (e.g., a project with an analysis section AND a creative design section).","One task requiring two thinking types (e.g., analyze data AND design a solution).","Task set labeled by DOK or Bloom's level.","Mini research task alongside a practical application task."],"p":"Ongoing","dom":2},{"id":"c35","dim":"2.2","dn":"Content Knowledge and Expertise","c":"Sequences instruction so students understand how the lesson fits within the structure of the discipline, the state standards, related content, and real-world scenarios.","i":["A 'big picture' slide or anchor chart shown at lesson start connecting today's skill to the discipline and a real-world use case.","'Where this fits' anchor chart or roadmap slide shown at lesson start.","Unit-intro slide connecting the skill to the discipline and a real use case.","Standards progression visual you walk students through."],"p":"One-Time OK","dom":2},{"id":"c36","dim":"2.3","dn":"Communication","c":"Establishes classroom practices that encourage ALL students to communicate safely and effectively using a variety of tools and methods with the teacher and peers.","i":["Photo/description of a discussion protocol in use (Socratic seminar, turn-and-talk chart, digital backchannel like Padlet).","Photo of a discussion protocol in action (seminar, talk moves chart).","Digital backchannel or collaborative doc screenshot from a discussion.","Talk tracker/tally showing broad student participation."],"p":"Ongoing","dom":2},{"id":"c37","dim":"2.3","dn":"Communication","c":"Uses possible student misunderstandings at strategic points in lessons to highlight misconceptions and inspire exploration and discovery.","i":["A lesson plan note marking a planned 'misconception checkpoint' with the question used to surface it.","'My favorite no' or error-warm-up routine artifact.","Planned misconception checkpoint question in the lesson plan.","Debate or discussion built around a common misconception."],"p":"One-Time OK","dom":2},{"id":"c38","dim":"2.3","dn":"Communication","c":"Provides explanations that are clear and coherent; uses verbal and written communication that is clear and correct.","i":["An observation note or recorded clip (if allowed) showing a clear teacher explanation, or sample written feedback to a student.","Annotated worked example or model you created.","Sample of written feedback showing clear, correct communication.","Observer/walkthrough note citing clarity of explanation."],"p":"Ongoing","dom":2},{"id":"c39","dim":"2.3","dn":"Communication","c":"Asks questions at the creative, evaluative and/or analysis levels that require deeper learning and broader understanding of the lesson objective.","i":["A question stem bank or lesson plan with specific higher-order questions written out in advance (Bloom's/DOK-aligned).","Question stem bank at analysis/evaluate/create levels.","Lesson plan with higher-order questions scripted in advance.","Exit ticket asking students to analyze or evaluate, not just recall."],"p":"One-Time OK","dom":2},{"id":"c40","dim":"2.3","dn":"Communication","c":"Skillfully balances wait time, questioning techniques and integration of student responses to support student-directed learning.","i":["Appraiser/observer feedback note specifically citing wait-time or questioning technique during a walkthrough.","Walkthrough feedback citing wait time or questioning technique.","Cold-call or equity-sticks tracker showing distributed questioning.","Self-audit or peer-observation notes on your questioning."],"p":"Ongoing","dom":2},{"id":"c41","dim":"2.3","dn":"Communication","c":"Skillfully provokes and guides discussion to pique curiosity and inspire student-led learning of meaningful and challenging content.","i":["A discussion-based lesson plan (Socratic seminar, debate, Harkness-style discussion) with your facilitation questions listed.","Socratic seminar or structured debate plan with your facilitation questions.","Discussion map showing student-to-student talk patterns.","Agenda from a student-led review or discussion session."],"p":"One-Time OK","dom":2},{"id":"c42","dim":"2.4","dn":"Differentiation","c":"Adapts lessons with a wide variety of instructional strategies to address individual needs of ALL students.","i":["A lesson plan with a differentiation column listing specific strategies for at least 3 student profiles (ELL, IEP/504, advanced).","Differentiation column naming strategies for 3+ learner profiles.","Strategy menu showing the variety used across one unit.","Intervention/extension matrix for a single objective."],"p":"Ongoing","dom":2},{"id":"c43","dim":"2.4","dn":"Differentiation","c":"Consistently monitors the quality of student participation and performance.","i":["A participation/engagement tracking sheet or checklist used during group work.","Participation or engagement checklist used during group work.","Conferring log from one-on-one check-ins.","Group observation notes with quality ratings, not just completion."],"p":"Ongoing","dom":2},{"id":"c44","dim":"2.4","dn":"Differentiation","c":"Always provides differentiated instructional methods and content to ensure students have the opportunity to master what is being taught.","i":["Sample of leveled materials for the same lesson (e.g., 3 versions of the same reading passage at different complexity).","Leveled material sets for one lesson.","Playlist/pathway screenshot showing different routes to mastery.","Small-group rotation schedule tied to skill data."],"p":"Ongoing","dom":2},{"id":"c45","dim":"2.4","dn":"Differentiation","c":"Consistently prevents student confusion or disengagement by addressing learning and/or social-emotional needs of ALL students.","i":["A 'check-in' log or seating chart with notes on individual student needs and the in-the-moment adjustments made.","Check-in log noting individual needs and the adjustment made.","Seating chart annotated with proactive supports.","Visual schedule, timers, or SEL check-in slide used to prevent disengagement."],"p":"Ongoing","dom":2},{"id":"c46","dim":"2.5","dn":"Monitor and Adjust","c":"Systematically gathers input from students in order to monitor and adjust instruction, activities or pacing to respond to differences in student needs.","i":["A quick-poll tool result (whiteboards, thumbs up/down, Mentimeter) used mid-lesson with a note on the pacing change made.","Mid-lesson poll results plus the pacing change you made.","Weekly student feedback survey and one change it produced.","Suggestion box note paired with the adjustment it triggered."],"p":"Ongoing","dom":2},{"id":"c47","dim":"2.5","dn":"Monitor and Adjust","c":"Adjusts instruction and activities to maintain student engagement.","i":["A lesson plan with a built-in 'Plan B' note (e.g., 'if engagement drops, switch to partner work').","Lesson plan with a written Plan B pivot.","Note documenting an in-the-moment activity switch and why.","Alternate version of an activity created after engagement dipped."],"p":"One-Time OK","dom":2},{"id":"c48","dim":"2.5","dn":"Monitor and Adjust","c":"Uses discreet and explicit checks for understanding through questioning and academic feedback.","i":["A cold-call/equity-stick tracking sheet or exit-ticket sample showing a specific check-for-understanding strategy.","Photo of whiteboard responses used as a whole-class check.","Digital quiz analytics from a mid-lesson check.","Exit ticket sample with the follow-up action noted."],"p":"Ongoing","dom":2},{"id":"c49","dim":"3.1","dn":"Classroom Environment, Routines and Procedures","c":"Establishes and uses effective routines, transitions and procedures that primarily rely on student leadership and responsibility.","i":["Photo of a posted student-job chart or classroom-jobs rotation (line leader, materials manager, etc.).","Photo of a posted student-jobs chart or rotation.","Description of an opening/closing routine students run themselves.","Transition roles (line leader, timekeeper) documented in action."],"p":"Ongoing","dom":3},{"id":"c50","dim":"3.1","dn":"Classroom Environment, Routines and Procedures","c":"Students take primary leadership and responsibility for managing student groups, supplies, and/or equipment.","i":["Photo/description of a student-run supply station or materials-manager role in action.","Photo of a student-run supply or equipment station.","Materials-manager role card and rotation list.","Student-managed check-out system for shared equipment."],"p":"Ongoing","dom":3},{"id":"c51","dim":"3.1","dn":"Classroom Environment, Routines and Procedures","c":"The classroom is safe and thoughtfully designed to engage, challenge and inspire students to participate in high-level learning beyond the learning objectives.","i":["Photos of the classroom layout/learning stations with a brief note on the design intent (e.g., flexible seating, maker space corner).","Classroom layout photos with a note on the design intent.","Enrichment corner, maker space, or curiosity display photo.","Interactive word wall or student-work display that invites participation."],"p":"One-Time OK","dom":3},{"id":"c52","dim":"3.2","dn":"Managing Student Behavior","c":"Consistently monitors behavior subtly, reinforces positive behaviors appropriately and intercepts misbehavior fluidly.","i":["Behavior log or positive-reinforcement tracker (e.g., ClassDojo export, point sheet) showing consistent, low-disruption management.","Positive-reinforcement tracker or points export.","Written proximity/nonverbal management plan you use.","Behavior data log showing consistent, low-disruption responses."],"p":"Ongoing","dom":3},{"id":"c53","dim":"3.2","dn":"Managing Student Behavior","c":"Students and the teacher together create, adopt and maintain classroom behavior standards.","i":["Photo of a co-created classroom agreement/norms poster signed or contributed to by students.","Photo of a co-created norms poster signed by students.","Class constitution or student-voted expectations document.","Documentation of revisiting/revising norms with students mid-year."],"p":"One-Time OK","dom":3},{"id":"c54","dim":"3.3","dn":"Classroom Culture","c":"Consistently engages ALL students with relevant, meaningful learning based on their interests and abilities to create a positive rapport amongst students.","i":["A student interest survey used to shape a lesson/project, plus the resulting student-choice assignment.","Interest survey plus the project or text choice it shaped.","Student-choice unit or assignment menu built from interests.","Community-building routine artifacts (greetings, circles, check-ins)."],"p":"Ongoing","dom":3},{"id":"c55","dim":"3.3","dn":"Classroom Culture","c":"Students collaborate positively and encourage each other's efforts and achievements.","i":["Photo of a peer-shoutout board, class celebration ritual, or collaborative project with peer feedback notes.","Photo of a peer shout-out board or appreciation wall.","Peer feedback samples with encouraging, specific comments.","Description of a class celebration ritual for effort and growth."],"p":"Ongoing","dom":3},{"id":"c56","dim":"4.1","dn":"Professional Demeanor and Ethics","c":"Behaves in accordance with the Code of Ethics and Standard Practices for Texas Educators.","i":["A simple personal log noting completion of required ethics/compliance training (e.g., annual Code of Ethics training certificate).","Annual ethics/compliance training certificate.","Personal log of required trainings with completion dates.","Screenshot of completed district compliance modules."],"p":"Ongoing","dom":4},{"id":"c57","dim":"4.1","dn":"Professional Demeanor and Ethics","c":"Models ALL professional standards (attendance, professional appearance and behaviors) across the campus AND district for educators and students.","i":["Attendance record/sign-in log, plus a note of any district- or campus-wide event you modeled professionalism at (not just your own classroom).","Attendance record or sign-in log.","Duty roster or supervision participation documentation.","Note of a district event where you represented the campus professionally."],"p":"Ongoing","dom":4},{"id":"c58","dim":"4.1","dn":"Professional Demeanor and Ethics","c":"Advocates for the needs of all students in the classroom AND campus.","i":["Email or meeting note where you advocated for a student need at the campus level (e.g., requesting a 504 review, raising an equity concern in a staff meeting).","Email advocating for a student support at campus level (redacted).","Staff-meeting proposal you raised on behalf of student needs.","Referral or resource request you initiated for students (redacted)."],"p":"Ongoing","dom":4},{"id":"c59","dim":"4.2","dn":"Goal Setting","c":"Consistently sets, modifies and meets short- and long-term professional goals based on self-assessment, reflection, peer and supervisor feedback, contemporary research and analysis of student learning.","i":["Your GSPD document showing the original goal, a documented mid-year revision, and the evidence/data behind the revision.","GSPD document showing original goal plus a documented mid-year revision.","Research article or book cited in your plan with how you applied it.","Peer feedback notes that informed a goal revision."],"p":"Ongoing","dom":4},{"id":"c60","dim":"4.2","dn":"Goal Setting","c":"Implements substantial changes in practice resulting in significant improvement in student performance.","i":["A before/after data comparison (e.g., benchmark scores) tied directly to a specific instructional change you made.","Before/after benchmark or unit-test comparison tied to a change you made.","Timeline of a strategy rollout with the data at each checkpoint.","Short case-study write-up of the change and its measured effect."],"p":"Ongoing","dom":4},{"id":"c61","dim":"4.3","dn":"Professional Development","c":"Leads colleagues collaboratively in and beyond the school to identify professional development needs through detailed data analysis and self-reflection.","i":["Agenda or notes from a PD session/PLC you led (on or off campus), plus the data you used to justify the topic.","Agenda from a PD session or PLC you facilitated.","Data slides you prepared to justify the PD topic.","Needs-assessment survey you ran and its results."],"p":"Ongoing","dom":4},{"id":"c62","dim":"4.3","dn":"Professional Development","c":"Seeks resources and collaboratively fosters faculty knowledge and skills.","i":["An article, training, or resource you shared with colleagues, plus a note on how it was used (e.g., a one-pager you wrote for your team).","One-pager or resource you created and shared with your team.","Screenshot of a shared folder/library you maintain for colleagues.","Email sharing a strategy plus colleague replies showing use (redacted)."],"p":"Ongoing","dom":4},{"id":"c63","dim":"4.3","dn":"Professional Development","c":"Develops and fulfills the school and district improvement plans through professional learning communities, grade- or subject-level team leadership, committee leadership or other opportunities beyond the campus.","i":["Sign-in sheet or appointment letter showing a leadership role (committee chair, grade-level lead, district task force) plus a brief summary of your contribution.","Appointment letter or roster showing a leadership role.","Committee minutes reflecting your contributions.","Agendas from team meetings you lead."],"p":"Ongoing","dom":4},{"id":"c64","dim":"4.4","dn":"School Community Involvement","c":"Systematically contacts parents/guardians regarding students' academic and social/emotional growth through various methods.","i":["A parent-contact log (calls, emails, ClassDojo/Remind messages) showing regular, varied-method outreach \u2014 not just at report card time.","Parent-contact log showing regular, varied outreach.","Messaging app (Remind/ClassDojo) export of ongoing family contact.","Archive of class newsletters sent across the year.","Positive-call log, not just concern calls."],"p":"Ongoing","dom":4},{"id":"c65","dim":"4.4","dn":"School Community Involvement","c":"Initiates collaborative efforts that enhance student learning and growth.","i":["Documentation of an event or partnership you started (e.g., a family math night, a tutoring program, a class-to-class collaboration).","Flyer or plan for an event you started (family night, tutoring, showcase).","Email chain showing a partnership you initiated (redacted).","Documentation of a club, program, or collaboration you founded."],"p":"One-Time OK","dom":4},{"id":"c66","dim":"4.4","dn":"School Community Involvement","c":"Leads students, colleagues, families and community members toward reaching the mission, vision and goals of the school.","i":["Newsletter, flyer, or presentation you created/led that explicitly ties back to the school's mission/vision/goals.","Newsletter or presentation you made that ties work to the school mission.","Campus event you led with mission/vision language in materials.","Project documentation explicitly aligned to campus improvement goals."],"p":"Ongoing","dom":4}];
+
+const DOMAINS = {1:{name:"Planning",color:"var(--d1)",hex:"#2C4B7C"},2:{name:"Instruction",color:"var(--d2)",hex:"#8E4A7E"},3:{name:"Learning Environment",color:"var(--d3)",hex:"#2E8B8B"},4:{name:"Professional Practices",color:"var(--d4)",hex:"#C96A2E"}};
+const STATUS = [
+  {label:"Not started",color:"#C6CCC9",text:"#5A6662"},
+  {label:"In progress",color:"#E3A93C",text:"#7A5410"},
+  {label:"Collected",color:"#5B8DBE",text:"#28517A"},
+  {label:"Verified",color:"#3E7C4F",text:"#1F5230"},
+];
+
+const PROVIDERS = {
+  gemini:{label:"Google Gemini", model:"gemini-2.5-flash", keyUrl:"https://aistudio.google.com/apikey", note:"Recommended — free key in about 30 seconds with any Google account.", pdf:true},
+  openai:{label:"OpenAI (ChatGPT)", model:"gpt-4o-mini", keyUrl:"https://platform.openai.com/api-keys", note:"Requires an OpenAI platform account with billing enabled.", pdf:false},
+  anthropic:{label:"Anthropic (Claude)", model:"claude-sonnet-4-6", keyUrl:"https://console.anthropic.com/settings/keys", note:"Requires an Anthropic Console account.", pdf:true},
+  xai:{label:"xAI (Grok)", model:"grok-3", keyUrl:"https://console.x.ai", note:"Requires an xAI console account. If your browser blocks the connection, this provider may not support in-browser use.", pdf:false},
+};
+
+const RUBRIC_NOTES = `T-TESS CORE KNOWLEDGE (Texas Teacher Evaluation & Support System, TEA rubric 4/2024)
+
+PERFORMANCE LEVELS (student-centered <- -> teacher-centered): Distinguished, Accomplished, Proficient, Developing, Improvement Needed. Appraisers ANCHOR ratings at Proficient until evidence pulls them elsewhere. Proficient = strong practice; Distinguished = lofty, few consistently attain.
+
+QUALIFIER LADDERS that separate levels (the "word bank"): all -> most -> some -> few; consistently -> regularly -> sometimes -> rarely; always -> regularly -> does -> sometimes -> does not. Moving up a level is often a matter of scope (all vs most students), agency (students do it vs teacher does it), and consistency.
+
+KEY LEVEL DELTAS BY DIMENSION (Proficient -> Accomplished -> Distinguished essence):
+1.1 Standards & Alignment: goals aligned -> measurable + vertical alignment + integrates disciplines -> rigorous AND measurable, real-world relevance, student reflection time, enriching extensions.
+1.2 Data & Assessment: monitors all students, feedback, data tied to strategies -> + diagnostic/formative/summative in lesson plans, feedback on growth vs goals, use of results to reflect -> + students SELF-assess, track own progress; teacher engages colleagues to adapt school-wide strategies.
+1.3 Knowledge of Students: connects to prior knowledge, adjusts for all -> + future learning expectations, students apply strengths for own learning -> + interests + cross-content, students enhance EACH OTHER'S learning, individual learning patterns for academic + SEL success.
+1.4 Activities: higher-order questions, groups by need, roles understood, aligned materials -> + problem solving, group AND individual accountability, student input on goals -> + STUDENT-GENERATED questions driving inquiry, students own accountability, set goals and hold each other accountable, materials engage ownership.
+2.1 Achieving Expectations: challenges all, persists till most master, addresses mistakes -> + students set own high expectations, anticipates mistakes, self-monitoring systems -> + persists till ALL master, students self-monitor and self-correct, systematic goal-setting over time.
+2.2 Content Knowledge: accurate in multiple contexts, integrates disciplines, anticipates misunderstandings, types of thinking, fits discipline structure -> + depth for differentiated explanations, real-world, proactive mitigation, regularly -> + extensive knowledge of subject and related subjects, consistently, sequencing shows discipline + standards + related content + real-world.
+2.3 Communication: most students communicate, recognizes misunderstandings with array of techniques, remember/understand/apply questions, probing questions -> + ALL students incl. visual tools/tech, anticipates misunderstandings proactively, creative/evaluative/analysis questions, wait time -> + variety of tools with teacher AND peers, uses misconceptions strategically to inspire discovery, balances wait time + student responses for STUDENT-DIRECTED learning, provokes student-led discussion.
+2.4 Differentiation: adapts for individual needs of all, monitors participation, differentiated methods, recognizes confusion and responds -> + regularly differentiates, PROACTIVELY minimizes confusion -> + wide variety of strategies, consistently monitors, ALWAYS differentiates, PREVENTS confusion/disengagement.
+2.5 Monitor & Adjust: invites input, adjusts for engagement, monitors behavior/responses -> + utilizes input incl. pacing, continual purposeful checks -> + SYSTEMATICALLY gathers input, discreet AND explicit checks through questioning + academic feedback.
+3.1 Environment/Routines: procedures clear + efficient, students participate with limited direction, safe organized accessible to most -> + teacher implements effortlessly, students take SOME responsibility, inviting, accessible to ALL -> + routines rely primarily on STUDENT leadership, students take PRIMARY responsibility for groups/supplies/equipment, room designed to engage/challenge/inspire beyond objectives.
+3.2 Managing Behavior: implements system proficiently, most students meet standards -> + monitors subtly, responds swiftly, most know/understand/respect -> + intercepts misbehavior FLUIDLY, students AND teacher CREATE/adopt/maintain the standards.
+3.3 Classroom Culture: all engaged in relevant meaningful learning, respectful work -> + sometimes adjusts to interests, students collaborate positively with each other and teacher -> + consistently engages ALL based on interests/abilities, positive rapport AMONG students, students encourage each other's efforts and achievements.
+4.1 Demeanor & Ethics: Code of Ethics, meets all standards, advocates for students in classroom -> + MODELS standards within classroom, advocates for ALL students -> + models across CAMPUS AND DISTRICT, advocates classroom AND campus.
+4.2 Goal Setting: short+long-term goals from self-assessment/reflection/supervisor feedback, meets all -> + peer feedback + contemporary research + student learning analysis -> + consistently sets/MODIFIES/meets, substantial changes in practice -> significant improvement in student performance.
+4.3 Professional Development: collaborates in ALL scheduled PD/PLC/committees -> + LEADS colleagues on campus, fosters faculty knowledge beyond campus -> + leads in AND BEYOND school, detailed data analysis, develops/fulfills school AND district improvement plans.
+4.4 Community Involvement: contacts parents regularly (academic + social/emotional), all outreach, communicates mission -> + systematic contact through various methods, joins collaborative efforts, communicates to community members -> + INITIATES collaborative efforts, LEADS students/colleagues/families/community toward mission.
+
+PROCESS RULES (Implementation Guidebook):
+- Annual cycle: orientation (first 3 weeks, at least 2 weeks before first observation) -> GSPD plan submitted within 6 weeks of orientation -> informal walkthroughs + at least one formal observation -> post-conference (required, in person, ideally 20-30 min, evidence-driven, teacher self-identifying refinement area is the goal) -> EOY conference at least 15 days before last day of instruction.
+- Pre-conference: not required but highly recommended; orient appraiser to lesson, students, routines; anticipate easy/moderate/difficult student responses.
+- Domain 4 is NOT scored until AFTER the teacher presents evidence at the EOY conference. Artifacts are ESSENTIAL for Domains 1 and 4.
+- Post-conference structure: Introduction -> Reinforcement (area of strength) -> Refinement (area to grow) -> Review ratings.
+- Summative = rubric (80%) + student growth (20%). Evidence should drive ratings, not justify perceptions.
+- Best practice: tie at least one GSPD goal to last year's refinement area.`;
+
+const MODES = [
+  {id:"advisor", label:"Evidence Advisor", blurb:"Tell me what you already do — I'll map it to dimensions and name the artifact that proves it.",
+   instruction:"MODE: Evidence Advisor. The teacher will describe practices they already use. Map each to specific dimension codes and the performance level it supports, name the exact artifact that would PROVE it (photo, log, student work sample, data table, screenshot), note whether the criterion needs one-time or ongoing evidence, and point out untouched dimensions from their status summary. Prioritize cheapest wins — evidence collectible this week with zero extra work. Tailor examples to the teacher's subject when known.",
+   placeholder:"e.g., Students run their own stations, I use exit tickets every Friday, I message parents weekly..."},
+  {id:"rate", label:"Rate My Evidence", blurb:"Describe or upload an artifact — I'll judge which criterion it supports and how to strengthen it.",
+   instruction:"MODE: Rate My Evidence. The teacher describes or uploads an artifact (image/PDF). Identify which dimension(s) and criterion it supports, judge the performance level it evidences using exact rubric qualifier language, and state the specific upgrade that would push it one level higher. Check the pattern: if the criterion needs ongoing evidence, one artifact isn't enough — say what a dated series would look like. If names are visible in an upload, remind them to redact.",
+   placeholder:"Describe the artifact, or attach a photo/PDF of it..."},
+  {id:"debrief", label:"Post-Observation Debrief", blurb:"Paste or upload your scores and feedback — I'll decode them and turn the refinement area into moves.",
+   instruction:"MODE: Post-Observation Debrief. The teacher shares observation scores or appraiser feedback (pasted text, screenshot of a score dashboard/pie chart, or PDF). Read every rating carefully. For each dimension scored below Distinguished, quote the exact qualifier-word delta between their level and the next (e.g., Proficient 'most students' vs Accomplished 'all students'). Find the cross-dimension pattern (common theme: releasing control to students). Convert the refinement area into 2-3 concrete classroom moves plus the artifact to collect after each. Prepare them to self-identify their refinement area before the appraiser names it — that is what strong post-conferences reward.",
+   placeholder:"Paste scores/feedback, or attach a screenshot of your score sheet..."},
+  {id:"preconf", label:"Pre-Conference Prep", blurb:"Mock pre-conference: I ask what appraisers ask, and coach your answers into rubric language.",
+   instruction:"MODE: Pre-Conference Prep. Run a realistic mock pre-conference, one question at a time, drawn from what appraisers actually ask: why this lesson, how it fits the unit and standards, anticipated easy/moderate/difficult student responses, expected misconceptions, how they'll know students mastered it, aspirations for the period. After each answer, give brief coaching: restate their answer upgraded into rubric vocabulary and note which dimension it strengthens. Keep it conversational — one question per turn.",
+   placeholder:"Tell me about the lesson you'll be observed teaching, and we'll start."},
+  {id:"gspd", label:"GSPD Studio", blurb:"Draft goals in the structure Dimension 4.2 rewards, tied to your refinement area.",
+   instruction:"MODE: GSPD Studio. Help draft or refine Goal-Setting and Professional Development plan goals. Distinguished 4.2 requires goals based on self-assessment, reflection, PEER and supervisor feedback, CONTEMPORARY RESEARCH, and analysis of student learning — and goals that are set, MODIFIED, and met, producing substantial changes in practice and significant improvement in student performance. Draft SMART short- and long-term goals in that structure. Best practice: tie at least one goal to last year's refinement area. Include the PD activities and the evidence of attainment for each goal, so the plan is EOY-conference ready. Remind them the GSPD is due within six weeks of orientation.",
+   placeholder:"Share last year's refinement area or your self-assessment, and any goal ideas..."},
+  {id:"eoy", label:"EOY Package Builder", blurb:"Assemble your logged evidence into a Domain 4 presentation summary for the end-of-year conference.",
+   instruction:"MODE: EOY Package Builder. Using the teacher's evidence log in your context (statuses, descriptions, locations, dates) plus anything they add, assemble an end-of-year conference package: organized by Domain and dimension, a presentable summary of evidence for Domain 4 dimensions 4.1-4.4, plus highlights from Domains 1-3. Flag dimensions with thin or missing evidence and what could still be gathered before the conference. Format as a clean outline they can speak from — Domain 4 is not scored until they present this. Mention the Download EOY report (PDF) button on the dashboard for a formatted document.",
+   placeholder:"When is your EOY conference? Tell me anything not in your log and I'll build the package."},
+];
+</script>
+<script>
+"use strict";
+/* ---------------- state & persistence ---------------- */
+const LS_KEY = "ttess-companion-v1";
+let S = {
+  profile:{name:"My workspace", subject:"", goals:"", orientation:"", obsWindow:"", eoy:""},
+  evidence:{},           // {critId:{s,d,w,dt,n}}
+  analyses:[],           // saved coach notes
+  aiIdeas:{},            // {critId:text}
+  ai:{provider:"gemini", key:"", model:""},
+};
+try {
+  const raw = localStorage.getItem(LS_KEY);
+  if (raw) { const parsed = JSON.parse(raw); S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}}; }
+} catch(e){ console.error("load failed", e); }
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){ console.error("save failed", e); } }
+
+/* volatile UI state */
+let tab = "dashboard";
+let domainFilter = 0, statusFilter = null, patternFilter = null, search = "";
+let openCrit = null, ideaBusy = null, pdfBusy = false;
+let mode = null, chat = [], attachments = [], thinking = false;
+
+/* ---------------- helpers ---------------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const esc = (s) => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const fmtDate = () => new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+const daysUntil = (iso) => { if(!iso) return null; const d=new Date(iso+"T12:00:00"); if(isNaN(d)) return null; return Math.ceil((d-new Date())/86400000); };
+const addDays = (iso,n) => { if(!iso) return null; const d=new Date(iso+"T12:00:00"); if(isNaN(d)) return null; d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const prettyDate = (iso) => { if(!iso) return ""; const d=new Date(iso+"T12:00:00"); return isNaN(d)?iso:d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); };
+const ideaItems = (e) => (e?.d||"").split(";").map(s=>s.trim()).filter(Boolean);
+const hasIdea = (e, idea) => ideaItems(e).includes(idea);
+const critById = (id) => CRITERIA.find(c=>c.id===id);
+const hasKey = () => !!(S.ai.key && S.ai.key.trim());
+const modelName = () => (S.ai.model && S.ai.model.trim()) || PROVIDERS[S.ai.provider].model;
+
+function domStats(){
+  const out = {};
+  [1,2,3,4].forEach(d=>{
+    const crits = CRITERIA.filter(c=>c.dom===d);
+    const counts = [0,0,0,0];
+    crits.forEach(c=>counts[(S.evidence[c.id]?.s)||0]++);
+    out[d] = {total:crits.length, counts};
+  });
+  return out;
+}
+function gapDims(){
+  const byDim = {};
+  CRITERIA.forEach(c=>{
+    byDim[c.dim] = byDim[c.dim] || {name:c.dn, any:false};
+    if(((S.evidence[c.id]?.s)||0)>0) byDim[c.dim].any = true;
+  });
+  return Object.entries(byDim).filter(([,v])=>!v.any).map(([k,v])=>`${k} ${v.name}`);
+}
+function keyDates(){
+  const gspd = addDays(S.profile.orientation, 42);
+  return [
+    S.profile.orientation && {label:"Orientation", iso:S.profile.orientation},
+    gspd && {label:"GSPD plan due (6 wks after orientation)", iso:gspd},
+    S.profile.obsWindow && {label:"Observation window opens", iso:S.profile.obsWindow},
+    S.profile.eoy && {label:"End-of-year conference", iso:S.profile.eoy},
+  ].filter(Boolean);
+}
+
+function downloadBlob(content, filename, type){
+  const blob = content instanceof Blob ? content : new Blob([content], {type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+}
+
+/* ---------------- provider adapters ---------------- */
+async function callAI(systemText, history, maxTokens=1024){
+  const provider = S.ai.provider, key = S.ai.key.trim(), model = modelName();
+  if(!key) throw new Error("No API key set. Add one on the Settings tab.");
+  // Only the latest user message carries attachments; older ones become text notes.
+  const latestIdx = history.length - 1;
+  const norm = history.map((m,i)=>({
+    role: m.role,
+    text: m.text || "(see attached)",
+    files: (i===latestIdx && m.role==="user") ? (m.files||[]) : [],
+    fileNote: (i!==latestIdx && m.files && m.files.length) ? ` [previously attached: ${m.files.map(f=>f.name).join(", ")}]` : "",
+  }));
+
+  if(provider === "gemini"){
+    const contents = norm.map(m=>({
+      role: m.role==="assistant" ? "model" : "user",
+      parts: [
+        ...m.files.map(f=>({inline_data:{mime_type:f.mime, data:f.data}})),
+        {text: m.text + m.fileNote},
+      ],
+    }));
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({system_instruction:{parts:[{text:systemText}]}, contents, generationConfig:{maxOutputTokens:maxTokens}}),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error?.message || `Gemini error ${res.status}`);
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const text = parts.map(p=>p.text||"").join("").trim();
+    if(!text) throw new Error("Gemini returned an empty response. Try again or check the model name in Settings.");
+    return text;
+  }
+
+  if(provider === "anthropic"){
+    const messages = norm.map(m=>{
+      if(m.role==="assistant") return {role:"assistant", content:m.text};
+      if(m.files.length){
+        const blocks = m.files.map(f=> f.mime==="application/pdf"
+          ? {type:"document", source:{type:"base64", media_type:"application/pdf", data:f.data}}
+          : {type:"image", source:{type:"base64", media_type:f.mime, data:f.data}});
+        blocks.push({type:"text", text:m.text});
+        return {role:"user", content:blocks};
+      }
+      return {role:"user", content:m.text + m.fileNote};
+    });
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body: JSON.stringify({model, max_tokens:maxTokens, system:systemText, messages}),
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data?.error?.message || `Anthropic error ${res.status}`);
+    const text = (data.content||[]).map(b=>b.type==="text"?b.text:"").join("").trim();
+    if(!text) throw new Error("Claude returned an empty response.");
+    return text;
+  }
+
+  // OpenAI-compatible: openai + xai
+  const base = provider==="openai" ? "https://api.openai.com/v1/chat/completions" : "https://api.x.ai/v1/chat/completions";
+  const messages = [{role:"system", content:systemText}, ...norm.map(m=>{
+    if(m.role==="assistant") return {role:"assistant", content:m.text};
+    const imgs = m.files.filter(f=>f.mime!=="application/pdf");
+    if(imgs.length){
+      return {role:"user", content:[
+        ...imgs.map(f=>({type:"image_url", image_url:{url:`data:${f.mime};base64,${f.data}`}})),
+        {type:"text", text:m.text},
+      ]};
+    }
+    return {role:"user", content:m.text + m.fileNote};
+  })];
+  const res = await fetch(base, {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":`Bearer ${key}`},
+    body: JSON.stringify({model, max_tokens:maxTokens, messages}),
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data?.error?.message || `${PROVIDERS[provider].label} error ${res.status}`);
+  const text = data?.choices?.[0]?.message?.content?.trim();
+  if(!text) throw new Error("The model returned an empty response.");
+  return text;
+}
+
+function buildSystem(){
+  const p = S.profile, ds = domStats(), gaps = gapDims();
+  const statusSummary = [1,2,3,4].map(d=>{
+    const s = ds[d];
+    return `Domain ${d} (${DOMAINS[d].name}): ${s.counts[3]} verified, ${s.counts[2]} collected, ${s.counts[1]} in progress, ${s.counts[0]} not started of ${s.total}.`;
+  }).join(" ");
+  const logged = CRITERIA.filter(c=>((S.evidence[c.id]?.s)||0)>0).map(c=>{
+    const e = S.evidence[c.id];
+    return `[${c.dim} | ${STATUS[e.s].label}] ${c.c.slice(0,90)}${e.d?` — evidence: ${e.d}`:""}${e.w?` (stored: ${e.w})`:""}${e.dt?` (${e.dt})`:""}`;
+  }).join("\n");
+  const dates = keyDates().map(k=>{
+    const du = daysUntil(k.iso);
+    return `${k.label}: ${prettyDate(k.iso)}${du!==null?` (${du>=0?du+" days away":Math.abs(du)+" days ago"})`:""}`;
+  }).join("; ");
+  const modeObj = MODES.find(m=>m.id===mode);
+  return `You are the T-TESS Companion, a warm, sharp evaluation coach for Texas public-school teachers. You are talking with ${p.name}${p.subject?`, who teaches ${p.subject}`:""}.
+
+${RUBRIC_NOTES}
+
+DISTINGUISHED CRITERIA CHECKLIST (dimension | criterion | sample evidence | pattern):
+${CRITERIA.map(c=>`${c.dim} ${c.dn} :: ${c.c} :: e.g., ${c.i.slice(0,2).join(" | ")} :: ${c.p}`).join("\n")}
+
+TEACHER'S CURRENT EVIDENCE STATUS: ${statusSummary}
+Dimensions with NO evidence activity yet: ${gaps.length?gaps.join("; "):"none — every dimension has activity"}.
+${dates?`TEACHER'S KEY DATES: ${dates}`:""}
+${logged?`LOGGED EVIDENCE ENTRIES:\n${logged}`:"No evidence entries logged yet."}
+${p.goals?`TEACHER'S CURRENT GSPD GOALS:\n${p.goals}`:""}
+
+${modeObj?modeObj.instruction:"MODE: General coach. Answer any T-TESS question using the rubric and process knowledge above."}
+
+STYLE RULES: Plain conversational prose, short paragraphs. No markdown headers or asterisks — this renders as plain text. Always cite dimension codes like 2.3 when referencing the rubric. Quote exact qualifier words when explaining level differences. Be specific, practical, and encouraging without flattery. Where district-level policy varies (observation windows, walkthrough counts), note that local district policy controls. If an uploaded image shows student or appraiser names, gently remind about redaction. Keep responses focused — under ~450 words unless building a package or plan.`;
+}
+
+/* ---------------- exports ---------------- */
+function exportCSV(){
+  const q = v => `"${String(v??"").replace(/"/g,'""')}"`;
+  const header = ["Dimension","Dimension Name","Distinguished Criterion","Pattern","Status","Evidence Description","Where Stored","Date Collected","Notes"];
+  const rows = CRITERIA.map(c=>{
+    const e = S.evidence[c.id]||{s:0};
+    return [c.dim,c.dn,c.c,c.p,STATUS[e.s||0].label,e.d||"",e.w||"",e.dt||"",e.n||""].map(q).join(",");
+  });
+  downloadBlob("\uFEFF"+[header.map(q).join(","),...rows].join("\r\n"), "ttess-evidence-log.csv", "text/csv;charset=utf-8");
+}
+
+let jspdfPromise = null;
+function loadJsPDF(){
+  if(window.jspdf?.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if(!jspdfPromise){
+    jspdfPromise = new Promise((resolve,reject)=>{
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      s.onload = ()=> window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error("jsPDF missing"));
+      s.onerror = ()=> reject(new Error("jsPDF load failed"));
+      document.head.appendChild(s);
+    });
+  }
+  return jspdfPromise;
+}
+async function exportPDF(){
+  if(pdfBusy) return;
+  pdfBusy = true; render();
+  try{
+    const JsPDF = await loadJsPDF();
+    const doc = new JsPDF({unit:"pt", format:"letter"});
+    const W=612, M=54, maxW=W-M*2; let y=M;
+    const line = (txt,size,style,color,gap)=>{
+      doc.setFont("helvetica", style||"normal"); doc.setFontSize(size); doc.setTextColor(color||"#1C2B33");
+      doc.splitTextToSize(txt, maxW).forEach(w=>{
+        if(y>792-M){doc.addPage(); y=M;}
+        doc.text(w, M, y); y += size*1.35;
+      });
+      y += gap||0;
+    };
+    const p = S.profile, kds = keyDates(), gaps = gapDims();
+    line("T-TESS End-of-Year Evidence Report",20,"bold","#1C2B33",4);
+    line(`${p.name||"Teacher"}${p.subject?" — "+p.subject:""}   ·   Generated ${fmtDate()}`,10,"normal","#5A6662",10);
+    if(kds.length){ line("Key dates",12,"bold","#1C2B33",2); kds.forEach(k=>line(`${k.label}: ${prettyDate(k.iso)}`,10,"normal","#44565F")); y+=8; }
+    if(p.goals){ line("GSPD goals",12,"bold","#1C2B33",2); line(p.goals,10,"normal","#44565F",10); }
+    const totalDone = CRITERIA.filter(c=>((S.evidence[c.id]?.s)||0)>=2).length;
+    line(`Evidence collected or verified: ${totalDone} of ${CRITERIA.length} Distinguished criteria`,11,"bold","#1C2B33",8);
+    [4,1,2,3].forEach(d=>{
+      const crits = CRITERIA.filter(c=>c.dom===d && ((S.evidence[c.id]?.s)||0)>=2);
+      if(!crits.length) return;
+      y+=6;
+      line(`DOMAIN ${d} — ${DOMAINS[d].name.toUpperCase()}${d===4?"  (presented at EOY conference before Domain 4 is scored)":""}`,13,"bold",DOMAINS[d].hex,4);
+      let lastDim="";
+      crits.forEach(c=>{
+        const e = S.evidence[c.id];
+        if(c.dim!==lastDim){ line(`${c.dim} ${c.dn}`,11,"bold","#1C2B33",2); lastDim=c.dim; }
+        line(`• [${STATUS[e.s].label}] ${c.c}`,10,"normal","#1C2B33");
+        const detail = [e.d&&`Evidence: ${e.d}`, e.w&&`Stored: ${e.w}`, e.dt&&`Date: ${e.dt}`, e.n&&`Notes: ${e.n}`].filter(Boolean).join("   ·   ");
+        if(detail) line(`   ${detail}`,9,"normal","#5A6662",2);
+      });
+    });
+    if(gaps.length){ y+=8; line("Still thin — dimensions with no evidence activity yet",12,"bold","#B4534A",3); gaps.forEach(g=>line(`• ${g}`,10,"normal","#44565F")); }
+    y+=10;
+    line("Generated by T-TESS Companion. Ratings are determined by your appraiser; where local policy differs from the state guidebook, district policy controls.",8,"italic","#8A9793");
+    doc.save("ttess-eoy-report.pdf");
+  }catch(e){
+    console.error(e);
+    alert("The PDF library couldn't load, so I'll open your browser's print dialog instead — choose 'Save as PDF' there.");
+    window.print();
+  }
+  pdfBusy = false; render();
+}
+
+function exportBackup(){
+  const stamp = new Date().toISOString().slice(0,10);
+  downloadBlob(JSON.stringify(S,null,1), `my-ttess-data-${stamp}.json`, "application/json");
+}
+function importBackup(file){
+  const r = new FileReader();
+  r.onload = ()=>{
+    try{
+      const parsed = JSON.parse(r.result);
+      if(!parsed || typeof parsed!=="object" || !("evidence" in parsed)) throw new Error("not a companion backup");
+      if(!confirm("Load this file? It will replace whatever is currently saved in this browser with the file's contents.")) return;
+      S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}};
+      save(); render();
+      alert("Done — your data is loaded and everything is exactly as you left it.");
+    }catch(e){ alert("That doesn't look like a T-TESS Companion data file. Look for a file named like my-ttess-data-2026-07-07.json."); }
+  };
+  r.readAsText(file);
+}
+
+/* ---------------- render: dashboard ---------------- */
+function renderDashboard(){
+  const ds = domStats();
+  const totalVerified = [1,2,3,4].reduce((a,d)=>a+ds[d].counts[3],0);
+  const totalCollected = [1,2,3,4].reduce((a,d)=>a+ds[d].counts[2],0);
+  const kds = keyDates();
+  const q = search.trim().toLowerCase();
+  const shown = CRITERIA.filter(c=>{
+    if(domainFilter && c.dom!==domainFilter) return false;
+    const e = S.evidence[c.id]||{};
+    if(statusFilter!==null && ((e.s)||0)!==statusFilter) return false;
+    if(patternFilter && c.p!==patternFilter) return false;
+    if(q){
+      const hay = `${c.dim} ${c.dn} ${c.c} ${c.i.join(" ")} ${e.d||""} ${e.n||""}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const grouped = {};
+  shown.forEach(c=>{ grouped[c.dim]=grouped[c.dim]||{name:c.dn,dom:c.dom,items:[]}; grouped[c.dim].items.push(c); });
+
+  let h = "";
+  if(kds.length){
+    h += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">` + kds.map(k=>{
+      const du = daysUntil(k.iso);
+      const urgent = du!==null && du>=0 && du<=14, past = du!==null && du<0;
+      return `<div class="datechip${urgent?" urgent":""}"><b>${esc(k.label)}:</b> ${esc(prettyDate(k.iso))}${du!==null?` <span class="mono" style="font-weight:600;color:${past?"var(--faint)":urgent?"var(--amberT)":"var(--d1)"}">${past?Math.abs(du)+"d ago":du===0?"today":"in "+du+"d"}</span>`:""}</div>`;
+    }).join("") + `</div>`;
+  } else {
+    h += `<div style="background:#fff;border:1px dashed var(--gray);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--muted);margin-bottom:14px">Add your orientation, observation window, and EOY conference dates on the Settings tab — the GSPD six-week deadline computes automatically and countdowns appear here.</div>`;
+  }
+
+  h += `<div class="domgrid">` + [1,2,3,4].map(d=>{
+    const s = ds[d], done = s.counts[2]+s.counts[3];
+    const segs = [3,2,1].map(st=> s.counts[st] ? `<div style="width:${(s.counts[st]/s.total)*100}%;background:${STATUS[st].color}"></div>` : "").join("");
+    return `<button class="domcard" data-action="domfilter" data-d="${d}" style="border-left:6px solid ${DOMAINS[d].color};${domainFilter===d?`border-color:${DOMAINS[d].color};border-width:2px;border-left-width:6px;`:""}">
+      <div class="mono" style="font-size:10px;letter-spacing:.14em;color:${DOMAINS[d].color};font-weight:600">DOMAIN ${d}</div>
+      <div class="disp" style="font-size:16px;font-weight:600;margin:2px 0 8px">${DOMAINS[d].name}</div>
+      <div class="minibar">${segs}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">${done} of ${s.total} collected or verified</div>
+    </button>`;
+  }).join("") + `</div>`;
+
+  const chip = (on,label,action,extra,color)=>`<button class="chip${on?" on":""}" data-action="${action}" ${extra} style="${on?`border-color:${color||"var(--ink)"};color:${color||"var(--ink)"};background:${(color?color:"#1C2B33")}1A`:""}">${label}</button>`;
+  h += `<div class="card" style="padding:10px 12px;margin-bottom:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <input id="searchbox" value="${esc(search)}" placeholder="Search criteria, ideas, or your notes…" style="flex:1 1 220px;min-width:180px;border-radius:16px;padding:7px 11px">
+      ${STATUS.map((st,i)=>chip(statusFilter===i, st.label, "statusfilter", `data-s="${i}"`, st.text)).join("")}
+      <span style="width:1px;height:20px;background:var(--border)"></span>
+      ${chip(patternFilter==="Ongoing","Ongoing","patternfilter",`data-p="Ongoing"`,"#8E4A7E")}
+      ${chip(patternFilter==="One-Time OK","One-time","patternfilter",`data-p="One-Time OK"`,"#2C4B7C")}
+      <span style="flex:1"></span>
+      <button class="btn mono" data-action="csv" style="font-size:12px">⬇ CSV log</button>
+      <button class="btn dark mono" data-action="pdf" style="font-size:12px" ${pdfBusy?"disabled":""}>${pdfBusy?"Building…":"⬇ EOY report (PDF)"}</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:8px;font-size:12px;color:#5A6662">
+      <span style="font-weight:600;color:var(--ink)">${totalVerified} verified · ${totalCollected} collected · showing ${shown.length} of ${CRITERIA.length}</span>
+      <span style="font-style:italic">Click a status pill to advance it · click a criterion for evidence ideas.</span>
+    </div>
+  </div>`;
+
+  if(!shown.length){
+    h += `<div class="card" style="padding:40px;text-align:center;color:var(--muted)">Nothing matches those filters. Clear the search or filter chips above to see all ${CRITERIA.length} criteria.</div>`;
+  }
+
+  h += Object.entries(grouped).map(([dim,g])=>{
+    const rows = g.items.map((c,idx)=>{
+      const e = S.evidence[c.id]||{s:0};
+      const open = openCrit===c.id;
+      const st = STATUS[e.s||0];
+      let inner = `<div class="critrow" style="${idx?"border-top:1px solid var(--line)":""}">
+        <button class="pill" data-action="cycle" data-id="${c.id}" title="Click to advance status" style="background:${st.color}${(e.s||0)===0?"":"26"};color:${(e.s||0)===0?"#5A6662":st.text};box-shadow:inset 0 0 0 1.5px ${st.color}">${st.label}</button>
+        <button class="crittext" data-action="open" data-id="${c.id}">${esc(c.c)}
+          <span class="mono" style="margin-left:8px;font-size:10px;letter-spacing:.06em;color:${c.p==="Ongoing"?"#8E4A7E":"var(--muted)"}">${esc(c.p.toUpperCase())}</span>
+          ${e.d?`<span style="display:block;font-size:12px;color:var(--green);margin-top:3px">✓ ${esc(e.d)}${e.w?` — ${esc(e.w)}`:""}</span>`:""}
+        </button>
+        <span style="color:#B4BEBA;font-size:12px;flex-shrink:0;padding-top:3px">${open?"▲":"▼"}</span>
+      </div>`;
+      if(open){
+        const ideas = c.i.map((idea,ii)=>{
+          const added = hasIdea(e, idea);
+          return `<div style="display:flex;gap:8px;align-items:flex-start;padding:3px 0">
+            <button class="usebtn${added?" added":""}" data-action="toggleidea" data-id="${c.id}" data-ii="${ii}" title="${added?"Remove from":"Add to"} my evidence description">${added?"✓ added":"+ use"}</button>
+            <span>${esc(idea)}</span>
+          </div>`;
+        }).join("");
+        const ai = S.aiIdeas[c.id];
+        const aiBlock = ai
+          ? `<div style="font-weight:700;color:#8E4A7E;margin-bottom:4px">Ideas for your classroom${S.profile.subject?` (${esc(S.profile.subject)})`:""}:</div><div style="white-space:pre-wrap">${esc(ai)}</div>
+             <button class="mono" data-action="genideas" data-id="${c.id}" ${ideaBusy?"disabled":""} style="margin-top:6px;font-size:10px;border:1px solid var(--gray);background:#fff;border-radius:10px;padding:3px 9px;color:var(--muted)">${ideaBusy===c.id?"thinking…":"↻ regenerate"}</button>`
+          : `<button data-action="genideas" data-id="${c.id}" ${ideaBusy?"disabled":""} style="font-size:12px;font-weight:600;border:1px solid #8E4A7E;background:#fff;border-radius:14px;padding:5px 12px;color:#8E4A7E">${ideaBusy===c.id?"Thinking…":"✨ Ideas for my classroom"}</button>
+             ${!hasKey()?`<span style="margin-left:8px;font-size:11px;color:var(--faint)">Needs an AI key — set one on the Settings tab.</span>`:(!S.profile.subject?`<span style="margin-left:8px;font-size:11px;color:var(--faint)">Tip: set your subject in Settings for tailored ideas.</span>`:"")}`;
+        inner += `<div style="padding:0 14px 14px;font-size:13px">
+          <div class="ideabox">
+            <div style="font-weight:700;color:var(--ink);margin-bottom:6px">Evidence you could use — tap to add, tap again to remove:</div>
+            ${ideas}
+            <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">${aiBlock}</div>
+          </div>
+          <div class="fieldgrid">
+            <input data-bind="d" data-id="${c.id}" value="${esc(e.d||"")}" placeholder="What evidence do you have?">
+            <input data-bind="w" data-id="${c.id}" value="${esc(e.w||"")}" placeholder="Where is it stored? (drive folder, binder…)">
+            <input data-bind="dt" data-id="${c.id}" value="${esc(e.dt||"")}" placeholder="Date collected">
+            <input data-bind="n" data-id="${c.id}" value="${esc(e.n||"")}" placeholder="Notes">
+          </div>
+        </div>`;
+      }
+      return inner;
+    }).join("");
+    return `<section style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="dimtag" style="background:${DOMAINS[g.dom].color}">${esc(dim)}</span>
+        <h2 class="disp" style="font-size:17px;font-weight:600;margin:0">${esc(g.name)}</h2>
+      </div>
+      <div class="card" style="overflow:hidden">${rows}</div>
+    </section>`;
+  }).join("");
+
+  return h;
+}
+
+/* ---------------- render: coach ---------------- */
+function renderCoach(){
+  const chips = MODES.map(m=>`<button class="modechip${mode===m.id?" on":""}" data-action="mode" data-m="${m.id}">${m.label}</button>`).join("");
+  let intro;
+  const gaps = gapDims();
+  if(!hasKey()){
+    const pv = PROVIDERS[S.ai.provider];
+    intro = `<div style="max-width:620px;margin:30px auto;text-align:center;color:#5A6662">
+      <div class="disp" style="font-size:20px;font-weight:600;color:var(--ink);margin-bottom:8px">One quick setup step</div>
+      <p style="font-size:14px;line-height:1.6">The coach runs on an AI of your choice using your own free/personal API key — nothing is shared with anyone else, and the key lives only in this browser. The tracker, evidence library, and exports all work without one.</p>
+      <p style="font-size:13px;line-height:1.6"><b>Fastest route:</b> Google Gemini — get a free key at <b>aistudio.google.com/apikey</b> (sign in with any Google account, click "Create API key," copy it). Then paste it on the <b>Settings tab</b>. ChatGPT, Claude, and Grok keys work too.</p>
+      <button class="btn dark" data-action="gosettings">Open Settings</button>
+    </div>`;
+  } else if(mode){
+    const m = MODES.find(x=>x.id===mode);
+    intro = `<div style="max-width:620px;margin:30px auto;text-align:center;color:#5A6662">
+      <div class="disp" style="font-size:20px;font-weight:600;color:var(--ink);margin-bottom:8px">${m.label}</div>
+      <p style="font-size:14px;line-height:1.6">${m.blurb}</p>
+      <p style="font-size:12px;color:var(--faint)">You can paste text, or attach screenshots${PROVIDERS[S.ai.provider].pdf?" and PDFs":" (PDFs aren't supported by this provider — use screenshots)"} — score dashboards, pie charts, artifact photos.</p>
+    </div>`;
+  } else {
+    intro = `<div style="max-width:620px;margin:30px auto;text-align:center;color:#5A6662">
+      <div class="disp" style="font-size:20px;font-weight:600;color:var(--ink);margin-bottom:8px">Hi ${esc(S.profile.name)} — pick a mode or just ask.</div>
+      <p style="font-size:14px;line-height:1.6">I know the full rubric, all ${CRITERIA.length} Distinguished criteria, the guidebook process rules, your key dates, and your live evidence log${gaps.length?` — including the ${gaps.length} dimension${gaps.length>1?"s":""} you haven't touched yet.`:"."}</p>
+    </div>`;
+  }
+  const msgs = chat.map((m,i)=>`
+    <div style="display:flex;justify-content:${m.role==="user"?"flex-end":"flex-start"};margin-bottom:12px">
+      <div class="msg ${m.role==="user"?"user":"bot"}">
+        ${m.files&&m.files.length?`<div class="mono" style="font-size:11px;opacity:.75;margin-bottom:5px">📎 ${esc(m.files.map(f=>f.name).join(", "))}</div>`:""}${esc(m.text)}
+        ${m.role==="assistant"?`<div style="margin-top:8px"><button class="mono" data-action="savenote" data-i="${i}" style="font-size:11px;border:1px solid var(--gray);background:#fff;border-radius:12px;padding:3px 10px;color:var(--sub)">Save to my notes</button></div>`:""}
+      </div>
+    </div>`).join("");
+  const att = attachments.map((a,i)=>`<span class="mono" style="font-size:11px;background:#EDF0EF;border-radius:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px">📎 ${esc(a.name)} <button data-action="rmatt" data-i="${i}" style="border:none;background:transparent;font-size:12px;padding:0">✕</button></span>`).join(" ");
+  const ph = mode ? MODES.find(m=>m.id===mode).placeholder : "Ask anything about T-TESS, your evidence, or your scores…";
+  const accept = PROVIDERS[S.ai.provider].pdf ? "image/*,application/pdf" : "image/*";
+  return `<div style="display:flex;flex-direction:column;min-height:70vh">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">${chips}</div>
+    <div class="card" style="flex:1;border-radius:10px;display:flex;flex-direction:column;overflow:hidden">
+      <div id="chatscroll" style="flex:1;overflow-y:auto;padding:18px">
+        ${chat.length===0?intro:msgs}
+        ${chat.length>0&&thinking?`<div style="color:var(--faint);font-size:13px;font-style:italic">Coach is reading the rubric…</div>`:""}
+      </div>
+      <div style="border-top:1px solid var(--line);padding:12px">
+        ${attachments.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${att}</div>`:""}
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <button data-action="attach" title="Attach screenshot or image" style="border:1px solid var(--gray);background:#fff;border-radius:8px;padding:9px 12px;font-size:16px;flex-shrink:0" ${!hasKey()?"disabled":""}>📎</button>
+          <input id="filepick" type="file" accept="${accept}" multiple style="display:none">
+          <textarea id="chatinput" rows="2" placeholder="${esc(ph)}" style="flex:1;resize:none;line-height:1.4" ${!hasKey()?"disabled":""}></textarea>
+          <button class="btn dark" data-action="send" style="padding:10px 18px;font-size:14px;flex-shrink:0" ${thinking||!hasKey()?"disabled":""}>Send</button>
+        </div>
+        <div class="note" style="margin-top:6px">Keep uploads redacted (no student or appraiser names). Chats clear when you leave the page — tap "Save to my notes" under any response you want to keep. Coach: ${esc(PROVIDERS[S.ai.provider].label)}${hasKey()?` · ${esc(modelName())}`:" — no key set"}.</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- render: settings ---------------- */
+function renderSettings(){
+  const p = S.profile, pv = PROVIDERS[S.ai.provider];
+  const gspd = addDays(p.orientation, 42);
+  const provOpts = Object.entries(PROVIDERS).map(([k,v])=>`<option value="${k}" ${S.ai.provider===k?"selected":""}>${v.label}</option>`).join("");
+  const notes = S.analyses.length ? S.analyses.map((a,i)=>`
+    <details class="saved">
+      <summary><span class="mono" style="font-size:11px;background:#EDF0EF;border-radius:4px;padding:2px 7px">${esc(a.mode)}</span>
+        <span style="color:var(--muted);font-weight:400">${esc(a.date)}</span>
+        <button class="mono" data-action="delnote" data-i="${i}" style="margin-left:auto;font-size:11px;border:none;background:transparent;color:var(--red)">delete</button>
+      </summary>
+      <div style="font-size:13px;line-height:1.55;white-space:pre-wrap;color:#2B3A42;padding-top:8px">${esc(a.text)}</div>
+    </details>`).join("")
+    : `<div style="padding:24px 0;text-align:center;color:var(--faint);font-size:13px">Nothing saved yet. In the Coach tab, tap "Save to my notes" under any response worth keeping.</div>`;
+
+  return `<div style="display:grid;grid-template-columns:1fr;gap:18px;max-width:760px">
+    <section class="card" style="padding:18px;border-radius:10px;border-left:6px solid var(--d1)">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 6px">About T-TESS Companion</h2>
+      <p style="font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.65">A free tool that helps Texas teachers collect, organize, and present evidence for their T-TESS evaluation — built around the TEA rubric (all four domains, every Distinguished criterion), the Implementation Guidebook's annual process, and 260+ ready-made artifact ideas. Created by <b>Dr. Bindu Kaimal</b>, a Texas high-school science teacher, for fellow teachers.</p>
+      <p style="font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.65"><b>How to use it, in three habits:</b></p>
+      <ol style="font-size:13px;color:var(--sub);margin:0 0 10px;padding-left:20px;line-height:1.7">
+        <li><b>Log as you go.</b> On the Evidence Dashboard, open any criterion to see artifact ideas, tap "+ use" on ones that fit your classroom, and advance the status pill (In progress → Collected → Verified) as you gather them. Note where each artifact lives — your drive, a binder — so you can find it in May.</li>
+        <li><b>Coach at the big moments.</b> Before your pre-conference, after your observation (screenshot your scores and upload them), when drafting GSPD goals, and before your end-of-year conference — pick the matching mode on the Coach tab.</li>
+        <li><b>Walk into your EOY conference ready.</b> One click on "EOY report (PDF)" turns everything you logged into an organized document, Domain 4 first — the domain that isn't scored until you present your evidence.</li>
+      </ol>
+      <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.6"><b>The fine print:</b> this is an independent teacher-made tool, not affiliated with or endorsed by TEA or any district. Your appraiser's judgment and your district's local T-TESS policies always control. Coaching suggestions are exactly that — suggestions. Keep all uploads and notes free of student and appraiser names.</p>
+    </section>
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">AI coach setup</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Bring your own key from whichever AI you use. It's stored only in this browser and sent only to the provider you pick. The tracker and exports work fine without one.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:8px">
+        <div><label class="lab">PROVIDER</label><select id="provider" style="width:100%;margin-top:4px">${provOpts}</select></div>
+        <div><label class="lab">API KEY</label><input id="apikey" type="password" value="${esc(S.ai.key)}" placeholder="Paste your key" style="width:100%;margin-top:4px"></div>
+        <div><label class="lab">MODEL (optional)</label><input id="apimodel" value="${esc(S.ai.model)}" placeholder="default: ${esc(pv.model)}" style="width:100%;margin-top:4px"></div>
+      </div>
+      <div style="font-size:12px;color:var(--sub);background:#F5F7F6;border-radius:6px;padding:8px 11px;margin-bottom:10px">
+        ${esc(pv.note)} Get a key: <b>${esc(pv.keyUrl.replace("https://",""))}</b>
+      </div>
+      <button class="btn dark" data-action="testai" id="testbtn">Test connection</button>
+      <span id="testresult" style="margin-left:10px;font-size:12px"></span>
+    </section>
+
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Profile</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">The coach reads this, so keep it current.</p>
+      <div class="fieldgrid" style="margin-bottom:12px">
+        <div><label class="lab">DISPLAY NAME</label><input data-prof="name" value="${esc(p.name)}" style="width:100%;margin-top:4px"></div>
+        <div><label class="lab">SUBJECT / COURSES</label><input data-prof="subject" value="${esc(p.subject)}" placeholder="e.g., AP Physics 1, 4th grade ELA…" style="width:100%;margin-top:4px"></div>
+      </div>
+      <h3 class="disp" style="font-size:15px;font-weight:600;margin:14px 0 4px">Key dates</h3>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Countdowns appear on the dashboard. The GSPD deadline computes automatically as six weeks after orientation.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:6px">
+        <div><label class="lab">ORIENTATION DATE</label><input type="date" data-prof="orientation" value="${esc(p.orientation||"")}" style="width:100%;margin-top:4px"></div>
+        <div><label class="lab">OBSERVATION WINDOW OPENS</label><input type="date" data-prof="obsWindow" value="${esc(p.obsWindow||"")}" style="width:100%;margin-top:4px"></div>
+        <div><label class="lab">EOY CONFERENCE</label><input type="date" data-prof="eoy" value="${esc(p.eoy||"")}" style="width:100%;margin-top:4px"></div>
+      </div>
+      ${gspd?`<div style="font-size:12px;color:var(--amberT);background:#FBEFDD;border:1px solid var(--amber);border-radius:6px;padding:7px 11px;margin-bottom:10px">GSPD plan due by <b>${esc(prettyDate(gspd))}</b> (six weeks after orientation).</div>`:""}
+      <label class="lab">CURRENT GSPD GOALS</label>
+      <textarea data-prof="goals" rows="5" placeholder="Paste your goal-setting & professional development plan goals here. GSPD Studio can draft them with you." style="width:100%;margin-top:4px;line-height:1.5;resize:vertical">${esc(p.goals)}</textarea>
+    </section>
+
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Saved coach notes</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Debriefs, evidence ratings, and plans you saved from the Coach tab. Newest first.</p>
+      ${notes}
+    </section>
+
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Save your work / use another computer</h2>
+      <p style="font-size:13px;color:var(--sub);margin:0 0 8px;line-height:1.6">Everything you enter here (statuses, evidence notes, goals, dates, saved coach notes) is stored <b>in this browser on this computer</b> — like a binder that stays in one classroom. To carry your binder with you, save it to a file:</p>
+      <ol style="font-size:13px;color:var(--sub);margin:0 0 12px;padding-left:20px;line-height:1.7">
+        <li><b>Save my data</b> downloads one small file (it ends in .json — you don't need to open or understand it, just keep it). Save it somewhere you can reach from anywhere, like your Google Drive or a flash drive.</li>
+        <li>On the other computer, open this same website, come to this tab, and click <b>Load my data</b> — pick that file, and everything appears exactly as you left it.</li>
+      </ol>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Good habit: click Save my data after a big logging session, and always before clearing your browser history (clearing history erases the binder).</p>
+      <button class="btn dark" data-action="backup">⬇ Save my data</button>
+      <button class="btn" data-action="restore">⬆ Load my data</button>
+      <input id="restorepick" type="file" accept="application/json,.json" style="display:none">
+    </section>
+
+    <p class="note">Privacy: everything saves to this browser's local storage on this device — nothing is sent anywhere except your coach messages, which go directly from your browser to the AI provider you chose, using your key. Uploaded images and PDFs are analyzed in the moment but never stored; keep artifact files in your own drive and log their location in the "Where is it stored?" field.</p>
+  </div>`;
+}
+
+/* ---------------- main render ---------------- */
+function render(){
+  $("#namechip").textContent = S.profile.name || "My workspace";
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
+  const main = $("#main");
+  main.innerHTML = tab==="dashboard" ? renderDashboard() : tab==="coach" ? renderCoach() : renderSettings();
+  if(tab==="coach"){
+    const sc = $("#chatscroll"); if(sc) sc.scrollTop = sc.scrollHeight;
+    const ci = $("#chatinput");
+    if(ci){
+      ci.value = draftInput;
+      ci.addEventListener("input", ()=>{ draftInput = ci.value; });
+      ci.addEventListener("keydown", (e)=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); doSend(); } });
+    }
+    const fp = $("#filepick");
+    if(fp) fp.addEventListener("change", async (e)=>{ await addFiles(e.target.files); e.target.value=""; render(); });
+  }
+  if(tab==="dashboard"){
+    const sb = $("#searchbox");
+    if(sb){
+      sb.addEventListener("input", ()=>{ search = sb.value; refreshListOnly(); });
+    }
+  }
+  if(tab==="settings"){
+    $("#provider").addEventListener("change", (e)=>{ S.ai.provider = e.target.value; save(); render(); });
+    $("#apikey").addEventListener("input", (e)=>{ S.ai.key = e.target.value; save(); });
+    $("#apimodel").addEventListener("input", (e)=>{ S.ai.model = e.target.value; save(); });
+    document.querySelectorAll("[data-prof]").forEach(inp=>{
+      inp.addEventListener("input", ()=>{ S.profile[inp.dataset.prof] = inp.value; save(); $("#namechip").textContent = S.profile.name || "My workspace"; });
+    });
+    const rp = $("#restorepick");
+    rp.addEventListener("change", (e)=>{ if(e.target.files[0]) importBackup(e.target.files[0]); e.target.value=""; });
+  }
+}
+/* re-render dashboard without stealing focus from the search box */
+function refreshListOnly(){
+  if(tab!=="dashboard") return;
+  const sb = $("#searchbox");
+  const pos = sb ? sb.selectionStart : 0;
+  const main = $("#main");
+  main.innerHTML = renderDashboard();
+  const nb = $("#searchbox");
+  if(nb){
+    nb.addEventListener("input", ()=>{ search = nb.value; refreshListOnly(); });
+    nb.focus(); nb.setSelectionRange(pos,pos);
+  }
+}
+
+let draftInput = "";
+
+/* ---------------- chat actions ---------------- */
+function fileToAttachment(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=> resolve({name:file.name, mime:file.type||"image/png", data:r.result.split(",")[1]});
+    r.onerror = ()=> reject(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+async function addFiles(fileList){
+  const files = Array.from(fileList||[]).slice(0,4);
+  for(const f of files){
+    if(f.size > 8*1024*1024) continue;
+    if(f.type==="application/pdf" && !PROVIDERS[S.ai.provider].pdf) { alert(`${PROVIDERS[S.ai.provider].label} can't read PDFs in the browser — attach a screenshot instead.`); continue; }
+    try{ attachments.push(await fileToAttachment(f)); }catch(e){}
+  }
+  attachments = attachments.slice(0,4);
+}
+async function doSend(){
+  const text = draftInput.trim();
+  if((!text && !attachments.length) || thinking || !hasKey()) return;
+  chat.push({role:"user", text: text || "(attachment)", files: attachments});
+  attachments = []; draftInput = ""; thinking = true; render();
+  try{
+    const history = chat.slice(-10);
+    const reply = await callAI(buildSystem(), history, 1024);
+    chat.push({role:"assistant", text: reply});
+  }catch(e){
+    chat.push({role:"assistant", text: "I couldn't reach the coach: " + (e.message||"unknown error") + "\n\nCheck your key, model name, and connection on the Settings tab, then try again."});
+  }
+  thinking = false; render();
+}
+async function doGenIdeas(critId){
+  if(ideaBusy || !hasKey()) { if(!hasKey()){ tab="settings"; render(); } return; }
+  const crit = critById(critId);
+  ideaBusy = critId; render();
+  try{
+    const sys = "You suggest concrete T-TESS evidence artifacts for Texas teachers. Respond with exactly 4 numbered one-line artifact ideas, each naming a specific tangible artifact (photo, log, sample, export, document). No preamble, no markdown symbols other than the numbers.";
+    const user = `Criterion (dimension ${crit.dim} ${crit.dn}, Distinguished level): "${crit.c}"\nEvidence pattern: ${crit.p}.\nMy teaching context: ${S.profile.subject || "not specified"}.\nGeneric ideas I already have: ${crit.i.join(" | ")}\nGive 4 NEW ideas tailored to my specific classroom context — different from the generic ones.`;
+    const text = await callAI(sys, [{role:"user", text:user, files:[]}], 600);
+    S.aiIdeas[critId] = text; save();
+  }catch(e){ alert("Couldn't generate ideas: " + (e.message||"unknown error")); }
+  ideaBusy = null; render();
+}
+async function testAI(){
+  const btn = $("#testbtn"), out = $("#testresult");
+  btn.disabled = true; out.textContent = "Testing…"; out.style.color = "var(--muted)";
+  try{
+    const reply = await callAI("Reply with exactly: OK", [{role:"user", text:"Connection test. Reply with exactly: OK", files:[]}], 20);
+    out.textContent = "✓ Connected — " + reply.slice(0,40); out.style.color = "var(--green)";
+  }catch(e){
+    out.textContent = "✕ " + (e.message||"failed"); out.style.color = "var(--red)";
+  }
+  btn.disabled = false;
+}
+
+/* ---------------- event delegation ---------------- */
+document.addEventListener("click", (ev)=>{
+  const t = ev.target.closest("[data-action],[data-tab]");
+  if(!t) return;
+  if(t.dataset.tab){ tab = t.dataset.tab; render(); return; }
+  const a = t.dataset.action;
+  if(a==="domfilter"){ const d=+t.dataset.d; domainFilter = domainFilter===d?0:d; render(); }
+  else if(a==="statusfilter"){ const s=+t.dataset.s; statusFilter = statusFilter===s?null:s; render(); }
+  else if(a==="patternfilter"){ const p=t.dataset.p; patternFilter = patternFilter===p?null:p; render(); }
+  else if(a==="cycle"){
+    const id = t.dataset.id;
+    const e = S.evidence[id] || {s:0,d:"",w:"",dt:"",n:""};
+    const wasInProgress = e.s===1;
+    S.evidence[id] = {...e, s:((e.s||0)+1)%4, dt: wasInProgress && !e.dt ? fmtDate() : e.dt};
+    save(); render();
+  }
+  else if(a==="open"){ const id=t.dataset.id; openCrit = openCrit===id?null:id; render(); }
+  else if(a==="toggleidea"){
+    const id = t.dataset.id, ii = +t.dataset.ii;
+    const crit = critById(id), idea = crit.i[ii];
+    const e = S.evidence[id] || {s:0,d:"",w:"",dt:"",n:""};
+    const items = ideaItems(e);
+    const next = items.includes(idea) ? items.filter(x=>x!==idea) : [...items, idea];
+    S.evidence[id] = {...e, d: next.join("; "), s: (e.s||0)>0 ? e.s : (next.length?1:0)};
+    save(); render();
+  }
+  else if(a==="genideas"){ doGenIdeas(t.dataset.id); }
+  else if(a==="csv"){ exportCSV(); }
+  else if(a==="pdf"){ exportPDF(); }
+  else if(a==="mode"){ mode = t.dataset.m; chat = []; render(); }
+  else if(a==="send"){ doSend(); }
+  else if(a==="attach"){ const fp=$("#filepick"); if(fp) fp.click(); }
+  else if(a==="rmatt"){ attachments.splice(+t.dataset.i,1); render(); }
+  else if(a==="savenote"){
+    const m = chat[+t.dataset.i];
+    if(m){ S.analyses.unshift({date:fmtDate(), mode: mode?MODES.find(x=>x.id===mode).label:"Coach", text:m.text}); S.analyses = S.analyses.slice(0,40); save(); t.textContent="✓ saved"; }
+  }
+  else if(a==="delnote"){ ev.preventDefault(); S.analyses.splice(+t.dataset.i,1); save(); render(); }
+  else if(a==="gosettings"){ tab="settings"; render(); }
+  else if(a==="backup"){ exportBackup(); }
+  else if(a==="restore"){ $("#restorepick").click(); }
+  else if(a==="testai"){ testAI(); }
+});
+
+/* evidence field edits (delegated, no re-render to keep focus) */
+document.addEventListener("input", (ev)=>{
+  const t = ev.target;
+  if(t.dataset && t.dataset.bind && t.dataset.id){
+    const id = t.dataset.id;
+    const e = S.evidence[id] || {s:0,d:"",w:"",dt:"",n:""};
+    e[t.dataset.bind] = t.value;
+    S.evidence[id] = e;
+    save();
+  }
+});
+
+render();
+
+</script>
+</body>
+</html>
