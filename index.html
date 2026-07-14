@@ -66,9 +66,9 @@
   details.saved summary::-webkit-details-marker{display:none}
   @media (max-width:640px){.fieldgrid{grid-template-columns:1fr}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-
-  <script data-goatcounter="https://beeindew.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
+  .overlay{position:fixed;inset:0;background:rgba(28,43,51,.55);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+  .overlay .box{background:#fff;border-radius:12px;max-width:520px;width:100%;padding:24px;max-height:90vh;overflow-y:auto}
+  .nudge{background:#FBEFDD;border:1px solid var(--amber);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--amberT);display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 </style>
 </head>
 <body>
@@ -171,16 +171,22 @@ const MODES = [
 "use strict";
 /* ---------------- state & persistence ---------------- */
 const LS_KEY = "ttess-companion-v1";
+const APP_VERSION = "v3 · Jul 2026";
 let S = {
-  profile:{name:"My workspace", subject:"", goals:"", orientation:"", obsWindow:"", eoy:""},
+  profile:{name:"My workspace", subject:"", goals:"", orientation:"", obsWindow:"", eoy:"", reinforcement:"", refinement:""},
   evidence:{},           // {critId:{s,d,w,dt,n}}
   analyses:[],           // saved coach notes
   aiIdeas:{},            // {critId:text}
+  inbox:[],              // quick captures [{t,text}]
+  observations:[],       // [{date,type,reinforcement,refinement,notes}]
+  selfAssess:{},         // {dim: levelIndex 0-4}
+  meta:{welcomed:false, unsaved:0},
   ai:{provider:"gemini", key:"", model:""},
 };
 try {
   const raw = localStorage.getItem(LS_KEY);
-  if (raw) { const parsed = JSON.parse(raw); S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}}; }
+  if (raw) { const parsed = JSON.parse(raw); S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}, meta:{...S.meta, ...(parsed.meta||{})}}; }
+  S.inbox = S.inbox||[]; S.observations = S.observations||[]; S.selfAssess = S.selfAssess||{};
 } catch(e){ console.error("load failed", e); }
 function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){ console.error("save failed", e); } }
 
@@ -201,6 +207,13 @@ const ideaItems = (e) => (e?.d||"").split(";").map(s=>s.trim()).filter(Boolean);
 const hasIdea = (e, idea) => ideaItems(e).includes(idea);
 const critById = (id) => CRITERIA.find(c=>c.id===id);
 const hasKey = () => !!(S.ai.key && S.ai.key.trim());
+const DIMS = (()=>{ const m=new Map(); CRITERIA.forEach(c=>{ if(!m.has(c.dim)) m.set(c.dim,{dn:c.dn,dom:c.dom}); }); return [...m.entries()].map(([dim,v])=>({dim,...v})); })();
+const LEVELS = ["Improvement Needed","Developing","Proficient","Accomplished","Distinguished"];
+let evTracked = false;
+function track(name){ try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:"event/"+name, title:name, event:true}); }catch(e){} }
+function trackEvidenceOnce(){ if(!evTracked){ evTracked=true; track("evidence-logged"); } }
+function bumpUnsaved(){ S.meta.unsaved = (S.meta.unsaved||0)+1; }
+function feedbackHref(){ const u="mailfrombindu", d="gmail" + ".com"; return "mailto:"+u+"@"+d+"?subject="+encodeURIComponent("T-TESS Companion feedback ("+APP_VERSION+")"); }
 const modelName = () => (S.ai.model && S.ai.model.trim()) || PROVIDERS[S.ai.provider].model;
 
 function domStats(){
@@ -348,6 +361,11 @@ Dimensions with NO evidence activity yet: ${gaps.length?gaps.join("; "):"none �
 ${dates?`TEACHER'S KEY DATES: ${dates}`:""}
 ${logged?`LOGGED EVIDENCE ENTRIES:\n${logged}`:"No evidence entries logged yet."}
 ${p.goals?`TEACHER'S CURRENT GSPD GOALS:\n${p.goals}`:""}
+${p.reinforcement?`LAST REINFORCEMENT AREA (strength named by appraiser): ${p.reinforcement}`:""}
+${p.refinement?`LAST REFINEMENT AREA (growth area named by appraiser — prioritize evidence and moves that serve this): ${p.refinement}`:""}
+${Object.keys(S.selfAssess).length?`TEACHER'S SELF-ASSESSMENT (their own honest rating per dimension): ${DIMS.filter(d=>S.selfAssess[d.dim]!==undefined&&S.selfAssess[d.dim]!==null&&S.selfAssess[d.dim]!=="").map(d=>`${d.dim} ${LEVELS[S.selfAssess[d.dim]]}`).join("; ")}`:""}
+${S.observations.length?`OBSERVATION LOG:\n${S.observations.map(o=>`${o.date||"undated"} (${o.type})${o.reinforcement?` — reinforcement: ${o.reinforcement}`:""}${o.refinement?` — refinement: ${o.refinement}`:""}${o.notes?` — notes: ${o.notes}`:""}`).join("\n")}`:""}
+${S.inbox.length?`TEACHER'S QUICK-CAPTURE INBOX (evidence jotted in the moment, not yet filed — when asked to help file these, name the best-fit dimension code and criterion for each and whether it should become an ongoing dated series):\n${S.inbox.map(x=>`- (${x.t}) ${x.text}`).join("\n")}`:""}
 
 ${modeObj?modeObj.instruction:"MODE: General coach. Answer any T-TESS question using the rubric and process knowledge above."}
 
@@ -399,6 +417,24 @@ async function exportPDF(){
     line(`${p.name||"Teacher"}${p.subject?" — "+p.subject:""}   ·   Generated ${fmtDate()}`,10,"normal","#5A6662",10);
     if(kds.length){ line("Key dates",12,"bold","#1C2B33",2); kds.forEach(k=>line(`${k.label}: ${prettyDate(k.iso)}`,10,"normal","#44565F")); y+=8; }
     if(p.goals){ line("GSPD goals",12,"bold","#1C2B33",2); line(p.goals,10,"normal","#44565F",10); }
+    if(p.reinforcement||p.refinement){
+      line("From my last evaluation",12,"bold","#1C2B33",2);
+      if(p.reinforcement) line(`Reinforcement (strength): ${p.reinforcement}`,10,"normal","#44565F");
+      if(p.refinement) line(`Refinement (growth area): ${p.refinement}`,10,"normal","#44565F");
+      y+=8;
+    }
+    if(S.observations.length){
+      line(`Observations this year (${S.observations.length})`,12,"bold","#1C2B33",2);
+      S.observations.forEach(o=>{
+        line(`• ${o.date||"undated"} — ${o.type}${o.reinforcement?` · reinforcement: ${o.reinforcement}`:""}${o.refinement?` · refinement: ${o.refinement}`:""}${o.notes?` · ${o.notes}`:""}`,9,"normal","#44565F");
+      });
+      y+=8;
+    }
+    const saDims = DIMS.filter(d=>S.selfAssess[d.dim]!==undefined&&S.selfAssess[d.dim]!==null&&S.selfAssess[d.dim]!=="");
+    if(saDims.length){
+      line("Self-assessment",12,"bold","#1C2B33",2);
+      line(saDims.map(d=>`${d.dim} ${LEVELS[S.selfAssess[d.dim]]}`).join("   ·   "),9,"normal","#44565F",8);
+    }
     const totalDone = CRITERIA.filter(c=>((S.evidence[c.id]?.s)||0)>=2).length;
     line(`Evidence collected or verified: ${totalDone} of ${CRITERIA.length} Distinguished criteria`,11,"bold","#1C2B33",8);
     [4,1,2,3].forEach(d=>{
@@ -419,6 +455,7 @@ async function exportPDF(){
     y+=10;
     line("Generated by T-TESS Companion. Ratings are determined by your appraiser; where local policy differs from the state guidebook, district policy controls.",8,"italic","#8A9793");
     doc.save("ttess-eoy-report.pdf");
+    track("pdf-export");
   }catch(e){
     console.error(e);
     alert("The PDF library couldn't load, so I'll open your browser's print dialog instead — choose 'Save as PDF' there.");
@@ -429,6 +466,7 @@ async function exportPDF(){
 
 function exportBackup(){
   const stamp = new Date().toISOString().slice(0,10);
+  S.meta.unsaved = 0; save();
   downloadBlob(JSON.stringify(S,null,1), `my-ttess-data-${stamp}.json`, "application/json");
 }
 function importBackup(file){
@@ -438,7 +476,8 @@ function importBackup(file){
       const parsed = JSON.parse(r.result);
       if(!parsed || typeof parsed!=="object" || !("evidence" in parsed)) throw new Error("not a companion backup");
       if(!confirm("Load this file? It will replace whatever is currently saved in this browser with the file's contents.")) return;
-      S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}};
+      S = {...S, ...parsed, profile:{...S.profile, ...(parsed.profile||{})}, ai:{...S.ai, ...(parsed.ai||{})}, meta:{...S.meta, ...(parsed.meta||{})}};
+      S.inbox = S.inbox||[]; S.observations = S.observations||[]; S.selfAssess = S.selfAssess||{};
       save(); render();
       alert("Done — your data is loaded and everything is exactly as you left it.");
     }catch(e){ alert("That doesn't look like a T-TESS Companion data file. Look for a file named like my-ttess-data-2026-07-07.json."); }
@@ -468,6 +507,11 @@ function renderDashboard(){
   shown.forEach(c=>{ grouped[c.dim]=grouped[c.dim]||{name:c.dn,dom:c.dom,items:[]}; grouped[c.dim].items.push(c); });
 
   let h = "";
+  if((S.meta.unsaved||0) >= 15){
+    h += `<div class="nudge"><span>💾 You've made ${S.meta.unsaved} changes since your last saved data file. Two clicks keeps your binder safe.</span>
+      <button class="btn" data-action="backup" style="font-size:12px;padding:5px 10px">⬇ Save my data</button>
+      <button data-action="dismissnudge" style="border:none;background:transparent;font-size:12px;color:var(--amberT);text-decoration:underline">later</button></div>`;
+  }
   if(kds.length){
     h += `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">` + kds.map(k=>{
       const du = daysUntil(k.iso);
@@ -478,6 +522,23 @@ function renderDashboard(){
     h += `<div style="background:#fff;border:1px dashed var(--gray);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--muted);margin-bottom:14px">Add your orientation, observation window, and EOY conference dates on the Settings tab — the GSPD six-week deadline computes automatically and countdowns appear here.</div>`;
   }
 
+  const inboxRows = S.inbox.map((x,i)=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:${i?"1px solid var(--line)":"none"};font-size:13px">
+      <span class="mono" style="font-size:10px;color:var(--faint);flex-shrink:0;padding-top:2px">${esc(x.t)}</span>
+      <span style="flex:1">${esc(x.text)}</span>
+      <button data-action="delinbox" data-i="${i}" style="border:none;background:transparent;color:var(--red);font-size:12px;flex-shrink:0">✕</button>
+    </div>`).join("");
+  h += `<div class="card" style="padding:12px 14px;margin-bottom:16px;border-left:6px solid var(--amber)">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+      <span class="disp" style="font-size:15px;font-weight:600">📥 Quick capture</span>
+      <span style="font-size:12px;color:var(--muted)">Between periods? Jot the evidence now, file it later.</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="inboxinput" placeholder="e.g., photo of shout-out board, saved in phone camera roll" style="flex:1">
+      <button class="btn" data-action="addinbox">Add</button>
+    </div>
+    ${S.inbox.length?`<div style="margin-top:8px">${inboxRows}</div>
+    <button class="btn" data-action="fileinbox" style="margin-top:8px;font-size:12px" ${!hasKey()?'disabled title="Needs an AI key — Settings tab"':""}>🗂 Ask the coach to file these (${S.inbox.length})</button>`:""}
+  </div>`;
   h += `<div class="domgrid">` + [1,2,3,4].map(d=>{
     const s = ds[d], done = s.counts[2]+s.counts[3];
     const segs = [3,2,1].map(st=> s.counts[st] ? `<div style="width:${(s.counts[st]/s.total)*100}%;background:${STATUS[st].color}"></div>` : "").join("");
@@ -617,7 +678,7 @@ function renderCoach(){
           <textarea id="chatinput" rows="2" placeholder="${esc(ph)}" style="flex:1;resize:none;line-height:1.4" ${!hasKey()?"disabled":""}></textarea>
           <button class="btn dark" data-action="send" style="padding:10px 18px;font-size:14px;flex-shrink:0" ${thinking||!hasKey()?"disabled":""}>Send</button>
         </div>
-        <div class="note" style="margin-top:6px">Keep uploads redacted (no student or appraiser names). Chats clear when you leave the page — tap "Save to my notes" under any response you want to keep. Coach: ${esc(PROVIDERS[S.ai.provider].label)}${hasKey()?` · ${esc(modelName())}`:" — no key set"}.</div>
+        <div class="note" style="margin-top:6px">Keep uploads redacted (no student or appraiser names). Chats clear when you leave the page — tap "Save to my notes" under any response you want to keep. Coach: ${esc(PROVIDERS[S.ai.provider].label)}${hasKey()?` · ${esc(modelName())}`:" — no key set"} · <a href="#" data-action="feedback" style="color:var(--d1)">send feedback</a></div>
       </div>
     </div>
   </div>`;
@@ -640,15 +701,16 @@ function renderSettings(){
 
   return `<div style="display:grid;grid-template-columns:1fr;gap:18px;max-width:760px">
     <section class="card" style="padding:18px;border-radius:10px;border-left:6px solid var(--d1)">
-      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 6px">About T-TESS Companion</h2>
-      <p style="font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.65">A free tool that helps Texas teachers collect, organize, and present evidence for their T-TESS evaluation — built around the TEA rubric (all four domains, every Distinguished criterion), the Implementation Guidebook's annual process, and 260+ ready-made artifact ideas. Created by <b>Dr. Bindu Kaimal</b>, a Texas high-school science teacher, for fellow teachers.</p>
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 6px">About T-TESS Companion <span class="mono" style="font-size:10px;color:var(--faint);font-weight:400">${APP_VERSION}</span></h2>
+      <p style="font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.65">A free tool that helps Texas teachers collect, organize, and present evidence for their T-TESS evaluation — built around the TEA rubric (all four domains, every Distinguished criterion), the Implementation Guidebook's annual process, and 260+ ready-made artifact ideas. Created by <b>Busybee</b>, a Texas high-school science teacher, for fellow teachers.</p>
       <p style="font-size:13px;color:var(--sub);margin:0 0 10px;line-height:1.65"><b>How to use it, in three habits:</b></p>
       <ol style="font-size:13px;color:var(--sub);margin:0 0 10px;padding-left:20px;line-height:1.7">
-        <li><b>Log as you go.</b> On the Evidence Dashboard, open any criterion to see artifact ideas, tap "+ use" on ones that fit your classroom, and advance the status pill (In progress → Collected → Verified) as you gather them. Note where each artifact lives — your drive, a binder — so you can find it in May.</li>
+        <li><b>Log as you go.</b> On the Evidence Dashboard, open any criterion to see artifact ideas, tap "+ use" on ones that fit your classroom, and advance the status pill as you gather them. In a rush? Drop a one-liner in Quick capture and file it later.</li>
         <li><b>Coach at the big moments.</b> Before your pre-conference, after your observation (screenshot your scores and upload them), when drafting GSPD goals, and before your end-of-year conference — pick the matching mode on the Coach tab.</li>
         <li><b>Walk into your EOY conference ready.</b> One click on "EOY report (PDF)" turns everything you logged into an organized document, Domain 4 first — the domain that isn't scored until you present your evidence.</li>
       </ol>
-      <p style="font-size:12px;color:var(--muted);margin:0;line-height:1.6"><b>The fine print:</b> this is an independent teacher-made tool, not affiliated with or endorsed by TEA or any district. Your appraiser's judgment and your district's local T-TESS policies always control. Coaching suggestions are exactly that — suggestions. Keep all uploads and notes free of student and appraiser names.</p>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px;line-height:1.6"><b>The fine print:</b> this is an independent teacher-made tool, not affiliated with or endorsed by TEA or any district. Your appraiser's judgment and your district's local T-TESS policies always control. Coaching suggestions are exactly that — suggestions. Keep all uploads and notes free of student and appraiser names.</p>
+      <button class="btn" data-action="feedback">📧 Send feedback or say hi</button>
     </section>
     <section class="card" style="padding:18px;border-radius:10px">
       <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">AI coach setup</h2>
@@ -672,6 +734,11 @@ function renderSettings(){
         <div><label class="lab">DISPLAY NAME</label><input data-prof="name" value="${esc(p.name)}" style="width:100%;margin-top:4px"></div>
         <div><label class="lab">SUBJECT / COURSES</label><input data-prof="subject" value="${esc(p.subject)}" placeholder="e.g., AP Physics 1, 4th grade ELA…" style="width:100%;margin-top:4px"></div>
       </div>
+      <div class="fieldgrid" style="margin-bottom:12px">
+        <div><label class="lab">LAST REINFORCEMENT AREA (your named strength)</label><input data-prof="reinforcement" value="${esc(p.reinforcement||"")}" placeholder="e.g., 2.3 Communication — questioning" style="width:100%;margin-top:4px"></div>
+        <div><label class="lab">LAST REFINEMENT AREA (your growth focus)</label><input data-prof="refinement" value="${esc(p.refinement||"")}" placeholder="e.g., 2.4 Differentiation" style="width:100%;margin-top:4px"></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">These come from your last post-conference or EOY conference. The coach uses your refinement area to prioritize suggestions, and best practice is to tie a GSPD goal to it.</p>
       <h3 class="disp" style="font-size:15px;font-weight:600;margin:14px 0 4px">Key dates</h3>
       <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Countdowns appear on the dashboard. The GSPD deadline computes automatically as six weeks after orientation.</p>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:6px">
@@ -682,6 +749,46 @@ function renderSettings(){
       ${gspd?`<div style="font-size:12px;color:var(--amberT);background:#FBEFDD;border:1px solid var(--amber);border-radius:6px;padding:7px 11px;margin-bottom:10px">GSPD plan due by <b>${esc(prettyDate(gspd))}</b> (six weeks after orientation).</div>`:""}
       <label class="lab">CURRENT GSPD GOALS</label>
       <textarea data-prof="goals" rows="5" placeholder="Paste your goal-setting & professional development plan goals here. GSPD Studio can draft them with you." style="width:100%;margin-top:4px;line-height:1.5;resize:vertical">${esc(p.goals)}</textarea>
+    </section>
+
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Observation log</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Record each walkthrough and formal observation as it happens. The coach and your EOY report both use this.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:8px">
+        <input type="date" id="obsdate">
+        <select id="obstype"><option>Walkthrough</option><option>Informal observation</option><option>Formal observation</option></select>
+        <input id="obsref" placeholder="Reinforcement (strength)">
+        <input id="obsrefine" placeholder="Refinement (growth area)">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <input id="obsnotes" placeholder="Notes (optional)" style="flex:1">
+        <button class="btn" data-action="addobs">Add</button>
+      </div>
+      ${S.observations.length ? S.observations.map((o,i)=>`
+        <div style="display:flex;gap:10px;align-items:flex-start;border-top:1px solid var(--line);padding:8px 0;font-size:13px">
+          <span class="mono" style="font-size:11px;color:var(--muted);flex-shrink:0;min-width:86px">${esc(o.date||"undated")}</span>
+          <span style="flex:1"><b>${esc(o.type)}</b>${o.reinforcement?` · 💪 ${esc(o.reinforcement)}`:""}${o.refinement?` · 🎯 ${esc(o.refinement)}`:""}${o.notes?`<span style="display:block;color:var(--sub)">${esc(o.notes)}</span>`:""}</span>
+          <button data-action="delobs" data-i="${i}" style="border:none;background:transparent;color:var(--red);font-size:12px;flex-shrink:0">✕</button>
+        </div>`).join("") : `<div style="font-size:12px;color:var(--faint)">No observations logged yet.</div>`}
+    </section>
+
+    <section class="card" style="padding:18px;border-radius:10px">
+      <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Self-assessment</h2>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Rate yourself honestly on each dimension. Appraisers anchor at Proficient, so start there and let your evidence move you. The coach compares this against your goals and evidence.</p>
+      ${[1,2,3,4].map(d=>`
+        <div style="margin-bottom:10px">
+          <div class="mono" style="font-size:10px;letter-spacing:.14em;font-weight:600;color:${DOMAINS[d].color};margin-bottom:4px">DOMAIN ${d} — ${DOMAINS[d].name.toUpperCase()}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px">
+          ${DIMS.filter(x=>x.dom===d).map(x=>`
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px">
+              <span class="mono" style="flex-shrink:0;min-width:26px;font-weight:600">${esc(x.dim)}</span>
+              <select data-sa="${esc(x.dim)}" style="flex:1;padding:5px 8px;font-size:12px">
+                <option value="">— not rated —</option>
+                ${LEVELS.map((lv,li)=>`<option value="${li}" ${S.selfAssess[x.dim]===li?"selected":""}>${lv}</option>`).join("")}
+              </select>
+            </label>`).join("")}
+          </div>
+        </div>`).join("")}
     </section>
 
     <section class="card" style="padding:18px;border-radius:10px">
@@ -708,11 +815,30 @@ function renderSettings(){
 }
 
 /* ---------------- main render ---------------- */
+function renderWelcome(){
+  return `<div class="overlay" id="welcome"><div class="box">
+    <div class="eyebrow" style="color:var(--muted)">Welcome</div>
+    <h2 class="disp" style="font-size:22px;font-weight:700;margin:4px 0 10px">Your T-TESS binder, but smarter.</h2>
+    <p style="font-size:14px;color:var(--sub);line-height:1.6;margin:0 0 10px">This free tool helps you collect and organize evaluation evidence all year — every Distinguished criterion, 260+ artifact ideas, and an optional AI coach for your conferences. Three habits:</p>
+    <ol style="font-size:13px;color:var(--sub);padding-left:20px;line-height:1.7;margin:0 0 14px">
+      <li><b>Log as you go</b> — open a criterion, tap the ideas that fit, advance the status pill.</li>
+      <li><b>Coach at the big moments</b> — pre-conference, post-observation, GSPD goals, EOY.</li>
+      <li><b>One click before your EOY conference</b> — a formatted PDF of everything you logged.</li>
+    </ol>
+    <div class="fieldgrid" style="margin-bottom:12px">
+      <div><label class="lab">YOUR NAME</label><input id="wname" placeholder="e.g., Ms. Rivera" style="width:100%;margin-top:4px"></div>
+      <div><label class="lab">WHAT YOU TEACH</label><input id="wsubject" placeholder="e.g., 7th grade math" style="width:100%;margin-top:4px"></div>
+    </div>
+    <p style="font-size:11px;color:var(--faint);margin:0 0 12px">Everything you enter stays in this browser on this device — nothing is uploaded anywhere.</p>
+    <button class="btn dark" data-action="welcomego" style="padding:10px 18px;font-size:14px">Let's go</button>
+    <button data-action="welcomego" style="border:none;background:transparent;color:var(--muted);font-size:13px;margin-left:8px;text-decoration:underline">Skip for now</button>
+  </div></div>`;
+}
 function render(){
   $("#namechip").textContent = S.profile.name || "My workspace";
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
   const main = $("#main");
-  main.innerHTML = tab==="dashboard" ? renderDashboard() : tab==="coach" ? renderCoach() : renderSettings();
+  main.innerHTML = (tab==="dashboard" ? renderDashboard() : tab==="coach" ? renderCoach() : renderSettings()) + (!S.meta.welcomed ? renderWelcome() : "");
   if(tab==="coach"){
     const sc = $("#chatscroll"); if(sc) sc.scrollTop = sc.scrollHeight;
     const ci = $("#chatinput");
@@ -779,7 +905,7 @@ async function doSend(){
   const text = draftInput.trim();
   if((!text && !attachments.length) || thinking || !hasKey()) return;
   chat.push({role:"user", text: text || "(attachment)", files: attachments});
-  attachments = []; draftInput = ""; thinking = true; render();
+  attachments = []; draftInput = ""; thinking = true; track("coach-send"); render();
   try{
     const history = chat.slice(-10);
     const reply = await callAI(buildSystem(), history, 1024);
@@ -827,6 +953,7 @@ document.addEventListener("click", (ev)=>{
     const e = S.evidence[id] || {s:0,d:"",w:"",dt:"",n:""};
     const wasInProgress = e.s===1;
     S.evidence[id] = {...e, s:((e.s||0)+1)%4, dt: wasInProgress && !e.dt ? fmtDate() : e.dt};
+    bumpUnsaved(); trackEvidenceOnce();
     save(); render();
   }
   else if(a==="open"){ const id=t.dataset.id; openCrit = openCrit===id?null:id; render(); }
@@ -837,6 +964,7 @@ document.addEventListener("click", (ev)=>{
     const items = ideaItems(e);
     const next = items.includes(idea) ? items.filter(x=>x!==idea) : [...items, idea];
     S.evidence[id] = {...e, d: next.join("; "), s: (e.s||0)>0 ? e.s : (next.length?1:0)};
+    bumpUnsaved(); trackEvidenceOnce();
     save(); render();
   }
   else if(a==="genideas"){ doGenIdeas(t.dataset.id); }
@@ -852,9 +980,39 @@ document.addEventListener("click", (ev)=>{
   }
   else if(a==="delnote"){ ev.preventDefault(); S.analyses.splice(+t.dataset.i,1); save(); render(); }
   else if(a==="gosettings"){ tab="settings"; render(); }
+  else if(a==="feedback"){ ev.preventDefault(); location.href = feedbackHref(); }
+  else if(a==="dismissnudge"){ S.meta.unsaved = 0; save(); render(); }
+  else if(a==="addinbox"){
+    const inp = $("#inboxinput");
+    if(inp && inp.value.trim()){ S.inbox.push({t:fmtDate(), text:inp.value.trim()}); save(); trackEvidenceOnce(); render(); }
+  }
+  else if(a==="delinbox"){ S.inbox.splice(+t.dataset.i,1); save(); render(); }
+  else if(a==="fileinbox"){
+    tab="coach"; mode=null; chat=[];
+    draftInput = "Help me file my quick-capture inbox. For each item, tell me which dimension and criterion it best supports, what to name it in my log, and whether it should become an ongoing dated series.";
+    render();
+  }
+  else if(a==="addobs"){
+    const o = {date:$("#obsdate")?.value||"", type:$("#obstype")?.value||"Walkthrough", reinforcement:$("#obsref")?.value.trim()||"", refinement:$("#obsrefine")?.value.trim()||"", notes:$("#obsnotes")?.value.trim()||""};
+    if(o.date || o.reinforcement || o.refinement || o.notes){
+      S.observations.unshift(o);
+      if(o.reinforcement && !S.profile.reinforcement) S.profile.reinforcement = o.reinforcement;
+      if(o.refinement && !S.profile.refinement) S.profile.refinement = o.refinement;
+      save(); render();
+    }
+  }
+  else if(a==="delobs"){ S.observations.splice(+t.dataset.i,1); save(); render(); }
   else if(a==="backup"){ exportBackup(); }
   else if(a==="restore"){ $("#restorepick").click(); }
   else if(a==="testai"){ testAI(); }
+  else if(a==="welcomego"){
+    const n = $("#wname")?.value.trim(), s2 = $("#wsubject")?.value.trim();
+    if(n) S.profile.name = n;
+    if(s2) S.profile.subject = s2;
+    S.meta.welcomed = true;
+    track("welcome-done");
+    save(); render();
+  }
 });
 
 /* evidence field edits (delegated, no re-render to keep focus) */
@@ -865,6 +1023,16 @@ document.addEventListener("input", (ev)=>{
     const e = S.evidence[id] || {s:0,d:"",w:"",dt:"",n:""};
     e[t.dataset.bind] = t.value;
     S.evidence[id] = e;
+    bumpUnsaved(); trackEvidenceOnce();
+    save();
+  }
+});
+document.addEventListener("change", (ev)=>{
+  const t = ev.target;
+  if(t.dataset && t.dataset.sa !== undefined && t.dataset.sa !== null && t.tagName==="SELECT"){
+    const v = t.value;
+    if(v==="") delete S.selfAssess[t.dataset.sa];
+    else S.selfAssess[t.dataset.sa] = +v;
     save();
   }
 });
@@ -872,5 +1040,6 @@ document.addEventListener("input", (ev)=>{
 render();
 
 </script>
+<script data-goatcounter="https://beeindew.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
