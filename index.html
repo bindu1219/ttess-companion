@@ -165,6 +165,22 @@ const MODES = [
   {id:"eoy", label:"EOY Package Builder", blurb:"Assemble your logged evidence into a Domain 4 presentation summary for the end-of-year conference.",
    instruction:"MODE: EOY Package Builder. Using the teacher's evidence log in your context (statuses, descriptions, locations, dates) plus anything they add, assemble an end-of-year conference package: organized by Domain and dimension, a presentable summary of evidence for Domain 4 dimensions 4.1-4.4, plus highlights from Domains 1-3. Flag dimensions with thin or missing evidence and what could still be gathered before the conference. Format as a clean outline they can speak from — Domain 4 is not scored until they present this. Mention the Download EOY report (PDF) button on the dashboard for a formatted document.",
    placeholder:"When is your EOY conference? Tell me anything not in your log and I'll build the package."},
+  {id:"lessonaudit", label:"Lesson Plan Auditor", blurb:"Paste a lesson plan — I'll check it against the 12 must-haves and flag what's missing.",
+   instruction:`MODE: Lesson Plan Auditor. The teacher pastes (or uploads) a lesson plan. Audit it against these 12 T-TESS must-haves, and for EACH one say present / partial / missing with a one-line reason and the dimension code:
+1. Measurable, TEKS-coded objective (1.1) — standard code + a verb + a measurable bar, not "understand X".
+2. Deliberate sequence with time allocations, closure protected (1.1) — warm-up->instruction->practice->closure with minutes; reflection time for Distinguished.
+3. Prior-knowledge bridge and real-world hook (1.3).
+4. Check for understanding WITH a decision point (1.2) — not just "exit ticket" but what they'll do with the result.
+5. Differentiation naming groups and methods (1.3/1.4/2.4) — how struggling/on-level/advanced each reach the objective; how groups are formed.
+6. Higher-order questions scripted in advance (1.4/2.3) — 2-3 at analysis/evaluate/create level, written out.
+7. Anticipated misconceptions and counter-move (2.2/2.3) — strongest Distinguished signal.
+8. A "where this fits" line in the unit/discipline (2.2).
+9. Mastery bar and persistence plan / Plan B (2.1/2.5).
+10. Materials, routines, transitions and who manages them (3.1).
+11. Engagement/grouping norms if applicable (3.2/3.3).
+12. Domain 4 hook — one sentence tying the lesson to the teacher's GSPD goal or refinement area (4.2).
+End with the 2-3 highest-leverage fixes, and offer to rewrite any weak element into rubric-ready language. Keep it scannable. If they haven't pasted a plan yet, ask them to paste it or describe the lesson.`,
+   placeholder:"Paste your lesson plan here (or attach it), and I'll audit it against the 12 must-haves..."},
 ];
 </script>
 <script>
@@ -209,6 +225,20 @@ const critById = (id) => CRITERIA.find(c=>c.id===id);
 const hasKey = () => !!(S.ai.key && S.ai.key.trim());
 const DIMS = (()=>{ const m=new Map(); CRITERIA.forEach(c=>{ if(!m.has(c.dim)) m.set(c.dim,{dn:c.dn,dom:c.dom}); }); return [...m.entries()].map(([dim,v])=>({dim,...v})); })();
 const LEVELS = ["Improvement Needed","Developing","Proficient","Accomplished","Distinguished"];
+const MUST_HAVES = [
+  ["Measurable, TEKS-coded objective","1.1","Standard code + a verb + a measurable bar (not \"understand X\"). The single most-checked item."],
+  ["Deliberate sequence with time allocations","1.1","Warm-up → instruction → practice → closure with minutes, and closure actually protected. Add reflection time for Distinguished."],
+  ["Prior-knowledge bridge & real-world hook","1.3","One line naming what students already know that this builds on, and where it touches their lives."],
+  ["Check for understanding WITH a decision point","1.2","Not just \"exit ticket\" — what you will DO with the result (\"if fewer than 80% get Q3, reteach vectors tomorrow\")."],
+  ["Differentiation naming groups & methods","1.3 / 1.4 / 2.4","How struggling, on-level, and advanced learners each reach the objective; how groups are formed (by data, with roles)."],
+  ["Higher-order questions scripted in advance","1.4 / 2.3","Two or three at the analysis/evaluate/create level, written out — unscripted questioning drifts to recall."],
+  ["Anticipated misconceptions & counter-move","2.2 / 2.3","\"Students will confuse mass and weight; I'll use the bowling-ball-on-the-moon demo.\" The strongest Distinguished signal a plan carries."],
+  ["A \"where this fits\" line","2.2","How the lesson sits in the unit arc and the discipline — one sentence."],
+  ["Mastery bar & persistence plan","2.1 / 2.5","What evidence tells you students mastered it, and your Plan B if they don't."],
+  ["Materials, routines & transitions","3.1","What's needed, who manages it (students, ideally), how transitions run."],
+  ["Engagement / grouping norms (if applicable)","3.2 / 3.3","Only if something specific applies, like collaboration roles or a discussion protocol."],
+  ["Domain 4 hook","4.2","One sentence tying the lesson to your GSPD goal or refinement area — turns the plan into Domain 1 AND Domain 4 evidence."],
+];
 let evTracked = false;
 function track(name){ try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:"event/"+name, title:name, event:true}); }catch(e){} }
 function trackEvidenceOnce(){ if(!evTracked){ evTracked=true; track("evidence-logged"); } }
@@ -539,6 +569,24 @@ function renderDashboard(){
     ${S.inbox.length?`<div style="margin-top:8px">${inboxRows}</div>
     <button class="btn" data-action="fileinbox" style="margin-top:8px;font-size:12px" ${!hasKey()?'disabled title="Needs an AI key — Settings tab"':""}>🗂 Ask the coach to file these (${S.inbox.length})</button>`:""}
   </div>`;
+  h += `<div class="card" style="padding:12px 14px;margin-bottom:16px">
+    <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <span class="disp" style="font-size:15px;font-weight:600">📎 Free classroom resources</span>
+      <span style="font-size:12px;color:var(--muted)">Ready-to-use downloads that generate their own T-TESS evidence.</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="T-TESS_Lesson_Plan_Template.docx" download style="text-decoration:none">📝 Lesson plan template (Word) — the 12 must-haves</a>
+      <a class="btn" href="Student_Data_Tracker.xlsx" download style="text-decoration:none">📊 Student data tracker (Excel) — baseline + quarterlies</a>
+    </div>
+    <div class="note" style="margin-top:8px">The lesson template maps each element to its rubric dimension. The tracker has students set goals and watch their own scores climb — that's Distinguished-level evidence for 1.2 and 2.1. Tip: pair the template with the Lesson Plan Auditor coach mode.</div>
+    <details style="margin-top:10px">
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--d1)">📋 The 12 must-haves in a T-TESS lesson plan (tap to view)</summary>
+      <ol style="margin:10px 0 4px;padding-left:22px;font-size:13px;line-height:1.55;color:var(--sub)">
+        ${MUST_HAVES.map(m=>`<li style="margin-bottom:7px"><b>${esc(m[0])}</b> <span class="mono" style="font-size:10px;color:var(--d1);background:#EDF0EF;border-radius:4px;padding:1px 6px">${esc(m[1])}</span><br><span style="color:var(--muted)">${esc(m[2])}</span></li>`).join("")}
+      </ol>
+      <div class="note" style="margin-top:4px">Items 1–6 are scored from the document itself; 7–11 are set up in the plan but scored during the observation; 12 is optional but the cheapest way to make one lesson count as Domain 1 AND Domain 4 evidence.</div>
+    </details>
+  </div>`;
   h += `<div class="domgrid">` + [1,2,3,4].map(d=>{
     const s = ds[d], done = s.counts[2]+s.counts[3];
     const segs = [3,2,1].map(st=> s.counts[st] ? `<div style="width:${(s.counts[st]/s.total)*100}%;background:${STATUS[st].color}"></div>` : "").join("");
@@ -774,7 +822,11 @@ function renderSettings(){
 
     <section class="card" style="padding:18px;border-radius:10px">
       <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">Self-assessment</h2>
-      <p style="font-size:12px;color:var(--muted);margin:0 0 12px">Rate yourself honestly on each dimension. Appraisers anchor at Proficient, so start there and let your evidence move you. The coach compares this against your goals and evidence.</p>
+      <p style="font-size:12px;color:var(--muted);margin:0 0 10px">Rate yourself honestly on each dimension. Appraisers anchor at Proficient, so start there and let your evidence move you. Then ask the coach to <b>reality-check your ratings against your logged evidence</b> and turn your lowest ones into a goal.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn dark" data-action="calibrate" style="font-size:12px" ${!hasKey()?'disabled title="Needs an AI key — set one above"':""}>🔍 Reality-check my ratings vs. my evidence</button>
+        <button class="btn" data-action="gaptogoal" style="font-size:12px" ${!hasKey()?'disabled title="Needs an AI key — set one above"':""}>🎯 Turn my lowest ratings into a goal</button>
+      </div>
       ${[1,2,3,4].map(d=>`
         <div style="margin-bottom:10px">
           <div class="mono" style="font-size:10px;letter-spacing:.14em;font-weight:600;color:${DOMAINS[d].color};margin-bottom:4px">DOMAIN ${d} — ${DOMAINS[d].name.toUpperCase()}</div>
@@ -1002,6 +1054,18 @@ document.addEventListener("click", (ev)=>{
     }
   }
   else if(a==="delobs"){ S.observations.splice(+t.dataset.i,1); save(); render(); }
+  else if(a==="calibrate"){
+    if(!Object.keys(S.selfAssess).length){ alert("Rate at least one dimension first, then I can reality-check it."); return; }
+    tab="coach"; mode=null; chat=[];
+    draftInput = "Reality-check my self-assessment against my logged evidence. For each dimension I've rated, compare my self-rating to what my evidence actually supports using the rubric's exact qualifier words, and tell me where I'm over-rating, under-rating, or calibrated. Then name the one or two dimensions where closing the gap would matter most.";
+    render();
+  }
+  else if(a==="gaptogoal"){
+    if(!Object.keys(S.selfAssess).length){ alert("Rate a few dimensions first, then I can build a goal from your lowest ones."); return; }
+    tab="coach"; mode="gspd"; chat=[];
+    draftInput = "Using my lowest self-assessment ratings and my logged evidence, draft a GSPD goal that targets my biggest growth area. Follow the Distinguished 4.2 structure and, if I have a refinement area on file, tie the goal to it.";
+    render();
+  }
   else if(a==="backup"){ exportBackup(); }
   else if(a==="restore"){ $("#restorepick").click(); }
   else if(a==="testai"){ testAI(); }
