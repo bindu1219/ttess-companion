@@ -79,11 +79,12 @@
       <span class="sq" style="background:var(--d1)"></span><span class="sq" style="background:var(--d2)"></span><span class="sq" style="background:var(--d3)"></span><span class="sq" style="background:var(--d4)"></span>
     </div>
   </div>
-  <div class="namechip" id="namechip">My workspace</div>
+  <button class="namechip" id="namechip" data-action="chipclick" style="cursor:pointer">Getting started</button>
 </div></header>
 <nav class="tabs"><div class="wrap">
   <button data-tab="dashboard" class="on">Evidence Dashboard</button>
   <button data-tab="coach">Coach</button>
+  <button data-tab="guide">Guide &amp; WICOR</button>
   <button data-tab="settings">Settings, Goals &amp; Notes</button>
 </div></nav>
 <main id="main"></main>
@@ -196,7 +197,7 @@ let S = {
   inbox:[],              // quick captures [{t,text}]
   observations:[],       // [{date,type,reinforcement,refinement,notes}]
   selfAssess:{},         // {dim: levelIndex 0-4}
-  meta:{welcomed:false, unsaved:0},
+  meta:{welcomed:false, unsaved:0, avid:false},
   ai:{provider:"gemini", key:"", model:""},
 };
 try {
@@ -239,6 +240,8 @@ const MUST_HAVES = [
   ["Engagement / grouping norms (if applicable)","3.2 / 3.3","Only if something specific applies, like collaboration roles or a discussion protocol."],
   ["Domain 4 hook","4.2","One sentence tying the lesson to your GSPD goal or refinement area — turns the plan into Domain 1 AND Domain 4 evidence."],
 ];
+const WICOR = {"W":{"label":"Writing to Learn","color":"var(--d1)","why":"Writing is how students process and reveal thinking \u2014 it feeds 2.3 Communication and gives 1.2 the formative data.","core":[["Cornell / focused notes","2.3, 1.2","Notes with questions in the left column and a written summary that students actually complete."],["Quickwrites","1.2, 2.5","3\u20135 ungraded minutes at the opener or closer to surface thinking fast."],["Learning logs / interactive notebooks","1.2, 2.1","Left side processes and reflects, right side records \u2014 students track their own understanding."],["Exit ticket with a 'why'","1.2","Answer plus reasoning, so you see the misconception, not just the score."],["Error analysis write-up","2.1, 2.2","Students explain what went wrong and why \u2014 the self-correction language in 2.1 Distinguished."],["RAFT (Role\u2013Audience\u2013Format\u2013Topic)","1.3, 2.2","Write from a role to a real audience; instant real-world relevance."],["One-sentence summary / GIST","2.2, 2.3","Compress a text, lab, or lecture into one precise sentence."],["Writing to explain a solution","2.2","Students justify the reasoning behind an answer, not just the answer."]],"subjects":[["English / ELA","Dialectical journals; TP-CASTT annotations; timed argument writes with peer rubric scoring."],["Math","Justify-your-steps write-ups; 'explain the error' problems; math autobiography or unit reflection."],["Science","Claim-Evidence-Reasoning (CER) lab conclusions; hypothesis journals; explaining a graph in prose."],["Social Studies","DBQ scaffolds; historical perspective RAFTs (letter from a delegate); document summaries."],["CTE","Job-sheet reflections; incident/safety write-ups; client-facing emails or proposals; process documentation."],["AP / Advanced","Timed FRQ practice with rubric self-scoring; annotated exemplar comparisons; argument outlines."],["Fine Arts","Artist statements; performance critique journals; rehearsal/practice logs with goals."],["World Languages","Dialogue journals in the target language; picture-prompt quickwrites; can-do statement reflections."]]},"I":{"label":"Inquiry","color":"var(--d2)","why":"The strongest AVID-to-Distinguished bridge: 1.4 Distinguished asks for students to GENERATE the questions that drive inquiry.","core":[["Costa's Levels question stems","2.3, 1.4","Level 1 gather / Level 2 process / Level 3 apply \u2014 posted and used BY students."],["AVID tutorials","1.4, 2.1, 3.3","Student brings a point of confusion framed as a question; the group works it. Richest single evidence event in AVID."],["Socratic seminar","1.4, 2.3","Text-based discussion driven by student-generated questions; you facilitate, they talk."],["Question Formulation Technique (QFT)","1.4","Students generate, categorize, and prioritize their own questions off a prompt."],["Phenomenon / provocation opener","1.3, 1.4","Show it before you explain it; students ask first."],["Wonder wall / driving-question board","1.4","A running, visible bank of student questions that shapes the unit."],["Inquiry-based labs and investigations","1.4, 2.2","Students design the procedure, not just follow it."],["Think-alouds and probing questioning","2.3","Model expert thinking, then hand the moves to students."]],"subjects":[["English / ELA","Socratic seminar on a shared text; student-generated essential questions for a novel unit."],["Math","Notice-and-wonder openers; 'which one doesn't belong?'; students write the next problem in the pattern."],["Science","Student-designed investigations; phenomenon-driven units; predict\u2013observe\u2013explain demos."],["Social Studies","Structured academic controversy; 'what would you have done?' decision points; source-based mysteries."],["CTE","Troubleshooting scenarios; client-problem case studies; 'why did this part fail?' diagnostics."],["AP / Advanced","Student-generated FRQ prompts; seminar on primary research; error-hunting in worked exemplars."],["Fine Arts","Critique protocols where students pose the questions; interpretive choices defended aloud."],["World Languages","Info-gap tasks; student-authored interview questions; culture-comparison inquiries."]]},"C":{"label":"Collaboration","color":"var(--d3)","why":"Serves 1.4 group accountability, 3.1 student-run routines, and 3.3 classroom culture \u2014 the ownership axis of the rubric.","core":[["Structured group roles","1.4, 3.1","Facilitator, recorder, materials manager, reporter \u2014 with role cards students can name."],["Philosophical chairs","2.3, 3.3","Take a position, defend it with evidence, be willing to move seats."],["Jigsaw","1.3, 1.4","Each student masters a piece and teaches it \u2014 students enhance each other's learning (1.3 Distinguished)."],["Think\u2013Pair\u2013Share / Numbered Heads","2.3, 2.5","Low-floor talk structures that get every voice in."],["Gallery walk with peer feedback","1.4, 3.3","Students critique work using a protocol, not vibes."],["Peer tutoring pairs formed by data","2.4, 1.3","Pair complementary strengths using your own assessment data."],["Student-managed stations or centers","3.1","Students run setup, materials, and transitions \u2014 3.1 Distinguished language."],["Collaborative problem-solving (whiteboarding)","1.4, 2.3","Groups reason publicly at vertical surfaces."]],"subjects":[["English / ELA","Literature circles with rotating roles; peer revision protocols; readers theater."],["Math","Vertical non-permanent surfaces; visibly random groups; 'my favorite no' error study."],["Science","Lab teams with rotating equipment roles; group data pooling then class-wide analysis."],["Social Studies","Structured debates; mock trials; simulations of legislative or diplomatic bodies."],["CTE","Shop teams with rotating safety officer; peer inspection checklists; client-project teams."],["AP / Advanced","Study teams by AP skill category; peer scoring using official rubrics; collaborative timed writes."],["Fine Arts","Ensemble sectionals led by students; peer critique circles; collaborative composition or design."],["World Languages","Conversation circles; role-play partners; collaborative storytelling chains."]]},"O":{"label":"Organization","color":"var(--d4)","why":"Feeds 3.1 routines and 2.1's Distinguished bar: students setting goals and monitoring their own progress over time.","core":[["Binder / notebook with student self-audit","3.1, 2.1","Students check their own organization against a rubric before you do."],["Student agendas and calendars","3.1","Students log their own deadlines and plan backwards."],["Goal-setting and progress monitoring","2.1, 1.2","Baseline, quarterly goals, self-tracked scores \u2014 2.1 Distinguished, verbatim."],["Data tracker / data folder","1.2, 2.1","Students graph their own results and write a next step."],["Time management during long tasks","3.1","Checkpoints and student-run timers on labs and projects."],["Study group planning","2.1","Students schedule and structure their own review sessions."],["Task breakdown / backwards planning","3.1, 1.4","Big project chunked by students into dated milestones."],["Consistent notebook conventions","3.1, 2.2","Dated entries, standard formats, data tables \u2014 discipline-appropriate."]],"subjects":[["English / ELA","Writing portfolios with revision history; reading logs with page goals."],["Math","Error logs by problem type; formula/reference sheets students build themselves."],["Science","Lab notebook conventions; unit checklists; equipment sign-out managed by students."],["Social Studies","Timeline binders; source-organization systems for research papers."],["CTE","Project timelines and Gantt-style boards; tool inventory and maintenance logs; certification tracking."],["AP / Advanced","Score-report skill trackers; exam countdown study plans; free-response practice logs."],["Fine Arts","Practice logs with weekly goals; portfolio curation; production run-of-show documents."],["World Languages","Vocabulary notebooks; can-do checklists; proficiency-level self-tracking."]]},"R":{"label":"Reading to Learn","color":"var(--d1)","why":"Access and analytical thinking \u2014 2.2's types of thinking and 2.4's differentiation both live here.","core":[["Marking the text","2.2, 2.4","Number paragraphs, circle key terms, underline claims \u2014 a shared annotation code."],["Charting the text","2.2","What a section SAYS vs. what it DOES \u2014 structure analysis."],["SOAPSTone","2.2, 1.3","Speaker, occasion, audience, purpose, subject, tone \u2014 adaptable to any document."],["Vocabulary strategies (Frayer, concept maps)","2.2, 2.4","Build precision on terms students confuse."],["Reading with a purpose / focused annotation","2.4, 3.1","Assign the lens before the read."],["KWL and anticipation guides","1.3","Activate prior knowledge and surface misconceptions before the text."],["Graphic organizers","2.4","Structure dense information for access without lowering rigor."],["Reciprocal teaching","1.3, 1.4","Predict, question, clarify, summarize \u2014 students rotate the four roles."]],"subjects":[["English / ELA","Close reading with layered annotations; TP-CASTT for poetry; text-dependent question sets."],["Math","Reading word problems for structure; annotating worked examples; decoding math vocabulary."],["Science","Marking lab procedures before starting; reading science journalism critically; interpreting figures."],["Social Studies","Primary source analysis (APPARTS/SOAPSTone); corroborating multiple accounts; map and chart reading."],["CTE","Reading manuals, schematics, and spec sheets; safety data sheets; code and standards documents."],["AP / Advanced","Annotating released passages; stimulus-based question analysis; dense secondary-source reading."],["Fine Arts","Score study; script analysis; reading criticism and artist statements."],["World Languages","Authentic text scaffolding; cognate strategies; skimming/scanning in the target language."]]}};
+const WICOR_COACH = "AVID CAMPUS CONTEXT: this teacher is on an AVID campus. Speak WICOR fluently and name specific WICOR strategies when suggesting evidence, lesson moves, or goals. Crosswalk: Writing (Cornell/focused notes, quickwrites, learning logs, CER, error analysis) serves 2.3 and 1.2. Inquiry (Costa's Levels question stems, AVID tutorials, Socratic seminar, QFT) serves 1.4 and 2.3 — and 1.4 Distinguished literally asks for student-GENERATED questions, so tutorials and QFT are the strongest bridge. Collaboration (philosophical chairs, structured group roles, jigsaw, student-managed stations) serves 1.4, 3.1 and 3.3. Organization (binders with self-audit, agendas, goal-setting, data trackers) serves 3.1 and 2.1 — 2.1 Distinguished wants students setting goals and monitoring progress over time. Reading (marking the text, charting the text, SOAPSTone, Frayer, reciprocal teaching) serves 2.2 and 2.4. Important caution to pass along when relevant: a WICOR strategy scores Proficient when the TEACHER runs it and Distinguished only when STUDENTS own it — the label does not earn the rating, the release of ownership does.";
 let evTracked = false;
 function track(name){ try{ if(window.goatcounter && window.goatcounter.count) window.goatcounter.count({path:"event/"+name, title:name, event:true}); }catch(e){} }
 function trackEvidenceOnce(){ if(!evTracked){ evTracked=true; track("evidence-logged"); } }
@@ -398,6 +401,8 @@ ${S.observations.length?`OBSERVATION LOG:\n${S.observations.map(o=>`${o.date||"u
 ${S.inbox.length?`TEACHER'S QUICK-CAPTURE INBOX (evidence jotted in the moment, not yet filed — when asked to help file these, name the best-fit dimension code and criterion for each and whether it should become an ongoing dated series):\n${S.inbox.map(x=>`- (${x.t}) ${x.text}`).join("\n")}`:""}
 
 ${modeObj?modeObj.instruction:"MODE: General coach. Answer any T-TESS question using the rubric and process knowledge above."}
+
+${S.meta.avid?WICOR_COACH:""}
 
 STYLE RULES: Plain conversational prose, short paragraphs. No markdown headers or asterisks — this renders as plain text. Always cite dimension codes like 2.3 when referencing the rubric. Quote exact qualifier words when explaining level differences. Be specific, practical, and encouraging without flattery. Where district-level policy varies (observation windows, walkthrough counts), note that local district policy controls. If an uploaded image shows student or appraiser names, gently remind about redaction. Keep responses focused — under ~450 words unless building a package or plan.`;
 }
@@ -733,6 +738,83 @@ function renderCoach(){
 }
 
 /* ---------------- render: settings ---------------- */
+function renderGuide(){
+  const setupDone = hasKey();
+  const strandOrder = ["W","I","C","O","R"];
+  const wicorHtml = strandOrder.map(k=>{
+    const s = WICOR[k];
+    return `<details style="margin-bottom:10px" ${S.meta.avid&&k==="W"?"open":""}>
+      <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 0;list-style:none">
+        <span class="dimtag" style="background:${s.color};min-width:26px;text-align:center">${k}</span>
+        <span class="disp" style="font-size:16px;font-weight:600">${esc(s.label)}</span>
+        <span style="font-size:11px;color:var(--muted);flex:1">${esc(s.why)}</span>
+      </summary>
+      <div style="padding:4px 0 10px 8px">
+        <div class="mono" style="font-size:10px;letter-spacing:.12em;color:var(--muted);margin:6px 0 4px">CORE STRATEGIES</div>
+        ${s.core.map(c=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:1px solid var(--line)">
+          <span style="flex:1;font-size:13px"><b>${esc(c[0])}</b><br><span style="color:var(--muted)">${esc(c[2])}</span></span>
+          <span class="mono" style="flex-shrink:0;font-size:10px;color:var(--d1);background:#EDF0EF;border-radius:4px;padding:2px 7px">${esc(c[1])}</span>
+        </div>`).join("")}
+        <div class="mono" style="font-size:10px;letter-spacing:.12em;color:var(--muted);margin:12px 0 4px">BY SUBJECT</div>
+        ${s.subjects.map(x=>`<div style="display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-top:1px solid var(--line);font-size:13px">
+          <span class="mono" style="flex-shrink:0;min-width:104px;font-size:11px;font-weight:600;color:${s.color}">${esc(x[0])}</span>
+          <span style="flex:1;color:var(--sub)">${esc(x[1])}</span>
+        </div>`).join("")}
+      </div>
+    </details>`;
+  }).join("");
+
+  const startHere = `<section class="card" style="padding:18px;border-radius:10px;border-left:6px solid ${setupDone?"var(--green)":"var(--amber)"}">
+    <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 6px">Start here</h2>
+    <p style="font-size:13px;color:var(--sub);line-height:1.65;margin:0 0 10px">This is a free tool for Texas teachers to collect and organize T-TESS evidence all year, and walk into conferences prepared. Two halves:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:12px">
+      <div style="background:#F5F7F6;border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">✅ Works right now — no setup</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.6">The evidence dashboard, all 66 Distinguished criteria with 260+ artifact ideas, quick capture, observation log, self-assessment, the resource downloads, the CSV export and the one-click EOY PDF report. Free, no account, nothing to install.</div>
+      </div>
+      <div style="background:${setupDone?"#EFF5F0":"#FBEFDD"};border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px">${setupDone?"✅ AI coach — connected":"🔑 AI coach — needs a free key (about 30 seconds)"}</div>
+        <div style="font-size:12px;color:var(--sub);line-height:1.6">${setupDone?"You're set up. The Coach tab is live with all seven modes.":"The coach is the optional half. Because this tool is free and has no server, it runs on <b>your own</b> AI account rather than someone else's bill. Steps below."}</div>
+      </div>
+    </div>
+    ${setupDone?"":`<div style="font-size:13px;color:var(--sub);line-height:1.7">
+      <b>How to turn on the coach (free route, Google Gemini):</b>
+      <ol style="padding-left:20px;margin:6px 0">
+        <li>Open <b>aistudio.google.com/apikey</b> in a new tab and sign in with any Google account.</li>
+        <li>Click <b>Create API key</b>. Copy the long string it gives you.</li>
+        <li>Come back here, go to the <b>Settings</b> tab, paste it into the <b>API key</b> box.</li>
+        <li>Click <b>Test connection</b>. A green ✓ means you're done — the Coach tab is now live.</li>
+      </ol>
+      <div class="note">Prefer ChatGPT, Claude, or Grok? Pick your provider in Settings and use that key instead. Your key stays in this browser only and is never shared with anyone — not even with me.</div>
+    </div>`}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn dark" data-action="gosettings">${setupDone?"Open Settings":"Go set up my coach"}</button>
+      <button class="btn" data-action="feedback">📧 Send feedback</button>
+    </div>
+  </section>`;
+
+  const howItWorks = `<section class="card" style="padding:18px;border-radius:10px">
+    <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 6px">How teachers use it, in three habits</h2>
+    <ol style="font-size:13px;color:var(--sub);padding-left:20px;line-height:1.75;margin:0">
+      <li><b>Log as you go.</b> Open any criterion on the dashboard, tap the artifact ideas that match your classroom, advance the status pill as you gather them, and note where each artifact lives. In a rush between periods? Drop a line in <b>Quick capture</b> and file it later.</li>
+      <li><b>Coach at the big moments.</b> Before a pre-conference, after an observation (upload a screenshot of your scores), when writing GSPD goals, when auditing a lesson plan, and before the end-of-year conference.</li>
+      <li><b>One click before your EOY conference.</b> The <b>EOY report (PDF)</b> button turns everything you logged into an organized document — Domain 4 first, since that's the domain that isn't scored until you present your evidence.</li>
+    </ol>
+    <div class="note" style="margin-top:10px">Your data lives in your own browser. Use <b>Save my data</b> in Settings to move between school and home computers, or before clearing browser history.</div>
+  </section>`;
+
+  const wicorSection = `<section class="card" style="padding:18px;border-radius:10px">
+    <h2 class="disp" style="font-size:18px;font-weight:600;margin:0 0 4px">WICOR strategy menu</h2>
+    <p style="font-size:13px;color:var(--sub);margin:0 0 6px;line-height:1.6">AVID's WICOR strategies and the T-TESS dimensions each one naturally serves — with subject-specific applications for ELA, math, science, social studies, CTE, AP, fine arts and world languages. Useful on any campus; the strategies are good pedagogy regardless of AVID branding.</p>
+    <div class="note" style="margin:0 0 12px"><b>The ownership rule:</b> a WICOR strategy scores Proficient when <i>you</i> run it and Distinguished when <i>students</i> own it. The label doesn't earn the rating — the release of ownership does.</div>
+    ${wicorHtml}
+    ${S.meta.avid?"":`<div class="note" style="margin-top:10px">Teaching on an AVID campus? Turn on the AVID toggle in Settings and the coach will speak WICOR across all seven modes.</div>`}
+  </section>`;
+
+  const order = S.meta.avid ? [wicorSection, startHere, howItWorks] : [startHere, howItWorks, wicorSection];
+  return `<div style="display:grid;grid-template-columns:1fr;gap:18px;max-width:820px">${order.join("")}</div>`;
+}
+
 function renderSettings(){
   const p = S.profile, pv = PROVIDERS[S.ai.provider];
   const gspd = addDays(p.orientation, 42);
@@ -773,6 +855,13 @@ function renderSettings(){
       </div>
       <button class="btn dark" data-action="testai" id="testbtn">Test connection</button>
       <span id="testresult" style="margin-left:10px;font-size:12px"></span>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+        <label style="display:flex;align-items:flex-start;gap:9px;cursor:pointer">
+          <input type="checkbox" id="avidtoggle" ${S.meta.avid?"checked":""} style="margin-top:3px;width:16px;height:16px">
+          <span style="font-size:13px;color:var(--sub);line-height:1.55"><b>My campus is an AVID school.</b><br>
+          <span style="color:var(--muted)">Turns on WICOR fluency across all seven coach modes — evidence suggestions, lesson audits and goals start naming Cornell notes, tutorials, Socratic seminars, philosophical chairs and the rest. The WICOR strategy menu on the Guide tab is always available either way.</span></span>
+        </label>
+      </div>
     </section>
 
     <section class="card" style="padding:18px;border-radius:10px">
@@ -881,16 +970,26 @@ function renderWelcome(){
       <div><label class="lab">YOUR NAME</label><input id="wname" placeholder="e.g., Ms. Rivera" style="width:100%;margin-top:4px"></div>
       <div><label class="lab">WHAT YOU TEACH</label><input id="wsubject" placeholder="e.g., 7th grade math" style="width:100%;margin-top:4px"></div>
     </div>
+    <div style="background:#F5F7F6;border-radius:8px;padding:10px 12px;margin:0 0 12px;font-size:12px;color:var(--sub);line-height:1.6">
+      <b>Good to know:</b> the tracker, all 260+ evidence ideas, the downloads and the EOY PDF report work right now — free, no setup. The AI coach is the optional half and needs a free key from Google Gemini (or ChatGPT/Claude/Grok) — about 30 seconds, walked through step by step on the <b>Guide</b> tab.
+    </div>
     <p style="font-size:11px;color:var(--faint);margin:0 0 12px">Everything you enter stays in this browser on this device — nothing is uploaded anywhere.</p>
     <button class="btn dark" data-action="welcomego" style="padding:10px 18px;font-size:14px">Let's go</button>
     <button data-action="welcomego" style="border:none;background:transparent;color:var(--muted);font-size:13px;margin-left:8px;text-decoration:underline">Skip for now</button>
   </div></div>`;
 }
 function render(){
-  $("#namechip").textContent = S.profile.name || "My workspace";
+  const chip = $("#namechip");
+  if(!hasKey()){
+    chip.textContent = "⚠ Coach not set up — tap here";
+    chip.style.color = "#F6D9A8"; chip.style.borderColor = "#8A6A2F";
+  } else {
+    chip.textContent = S.profile.name && S.profile.name!=="My workspace" ? S.profile.name : "Coach ready ✓";
+    chip.style.color = "#C3CFCB"; chip.style.borderColor = "#44565F";
+  }
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===tab));
   const main = $("#main");
-  main.innerHTML = (tab==="dashboard" ? renderDashboard() : tab==="coach" ? renderCoach() : renderSettings()) + (!S.meta.welcomed ? renderWelcome() : "");
+  main.innerHTML = (tab==="dashboard" ? renderDashboard() : tab==="coach" ? renderCoach() : tab==="guide" ? renderGuide() : renderSettings()) + (!S.meta.welcomed ? renderWelcome() : "");
   if(tab==="coach"){
     const sc = $("#chatscroll"); if(sc) sc.scrollTop = sc.scrollHeight;
     const ci = $("#chatinput");
@@ -910,10 +1009,12 @@ function render(){
   }
   if(tab==="settings"){
     $("#provider").addEventListener("change", (e)=>{ S.ai.provider = e.target.value; save(); render(); });
+    const avidBox = $("#avidtoggle");
+    if(avidBox) avidBox.addEventListener("change", (e)=>{ S.meta.avid = e.target.checked; save(); render(); });
     $("#apikey").addEventListener("input", (e)=>{ S.ai.key = e.target.value; save(); });
     $("#apimodel").addEventListener("input", (e)=>{ S.ai.model = e.target.value; save(); });
     document.querySelectorAll("[data-prof]").forEach(inp=>{
-      inp.addEventListener("input", ()=>{ S.profile[inp.dataset.prof] = inp.value; save(); $("#namechip").textContent = S.profile.name || "My workspace"; });
+      inp.addEventListener("input", ()=>{ S.profile[inp.dataset.prof] = inp.value; save(); if(hasKey()) $("#namechip").textContent = S.profile.name || "Coach ready ✓"; });
     });
     const rp = $("#restorepick");
     rp.addEventListener("change", (e)=>{ if(e.target.files[0]) importBackup(e.target.files[0]); e.target.value=""; });
@@ -1032,6 +1133,7 @@ document.addEventListener("click", (ev)=>{
   }
   else if(a==="delnote"){ ev.preventDefault(); S.analyses.splice(+t.dataset.i,1); save(); render(); }
   else if(a==="gosettings"){ tab="settings"; render(); }
+  else if(a==="chipclick"){ tab = hasKey() ? "settings" : "guide"; render(); }
   else if(a==="feedback"){ ev.preventDefault(); location.href = feedbackHref(); }
   else if(a==="dismissnudge"){ S.meta.unsaved = 0; save(); render(); }
   else if(a==="addinbox"){
